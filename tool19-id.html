@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>身份证信息解析 - 万能工具箱</title>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent: #0ea5e9;
+  --accent2: #38bdf8;
+  --bg: #03080f;
+  --card: #0c1420;
+  --card2: #111d2c;
+  --text: #e8f4fc;
+  --muted: #5a7a99;
+  --border: #1a3050;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Noto Sans SC', sans-serif; min-height: 100vh; }
+
+.topbar { background: #060d16; border-bottom: 1px solid var(--border); padding: 0 20px; height: 52px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; }
+.back-btn { color: var(--muted); text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 6px; transition: color .2s; }
+.back-btn:hover { color: var(--text); }
+.topbar-title { font-family: 'ZCOOL XiaoWei', serif; font-size: 17px; color: var(--accent2); }
+
+.hero { background: linear-gradient(135deg, #020d1a 0%, #03080f 60%); padding: 40px 20px 30px; text-align: center; border-bottom: 1px solid var(--border); }
+.hero-icon { font-size: 48px; margin-bottom: 12px; }
+.hero h1 { font-family: 'ZCOOL XiaoWei', serif; font-size: 26px; color: var(--accent2); margin-bottom: 8px; }
+.hero p { color: var(--muted); font-size: 14px; }
+
+.container { max-width: 680px; margin: 0 auto; padding: 24px 16px; }
+
+/* privacy notice */
+.privacy-notice { background: rgba(14,165,233,.08); border: 1px solid rgba(14,165,233,.3); border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; display: flex; gap: 12px; align-items: flex-start; }
+.privacy-notice .icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+.privacy-notice p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.privacy-notice strong { color: var(--accent2); }
+
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px; margin-bottom: 18px; }
+.card-title { font-size: 15px; font-weight: 500; color: var(--accent2); margin-bottom: 18px; }
+
+/* ID input */
+.id-input-wrap { position: relative; }
+.id-input { width: 100%; background: var(--card2); border: 2px solid var(--border); border-radius: 12px; padding: 16px 52px 16px 18px; font-size: 20px; color: var(--text); font-family: 'Courier New', monospace; letter-spacing: 3px; outline: none; transition: border-color .2s; }
+.id-input:focus { border-color: var(--accent); }
+.id-input::placeholder { font-size: 14px; letter-spacing: 1px; color: var(--muted); }
+.id-clear { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; padding: 4px; }
+.id-status { font-size: 13px; margin-top: 8px; height: 18px; }
+.status-ok { color: #18a87a; }
+.status-err { color: #e85d04; }
+
+.parse-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 500; cursor: pointer; font-family: inherit; margin-top: 14px; transition: opacity .2s; }
+.parse-btn:hover { opacity: .9; }
+
+/* results */
+.result-section { display: none; }
+
+/* ID card visual */
+.id-card-visual { background: linear-gradient(135deg, #0a2040, #0e3060); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 18px; position: relative; overflow: hidden; }
+.id-card-visual::before { content: '中华人民共和国'; position: absolute; top: 16px; right: 20px; font-size: 12px; color: rgba(56,189,248,.4); letter-spacing: 2px; }
+.id-card-visual::after { content: '居民身份证'; position: absolute; top: 32px; right: 20px; font-size: 11px; color: rgba(56,189,248,.3); letter-spacing: 1px; }
+.id-avatar { width: 70px; height: 90px; background: var(--card); border-radius: 6px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 36px; float: left; margin-right: 20px; }
+.id-card-info { overflow: hidden; }
+.id-card-name { font-family: 'ZCOOL XiaoWei', serif; font-size: 22px; color: var(--text); margin-bottom: 6px; }
+.id-card-field { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+.id-card-field span { color: var(--text); margin-left: 4px; }
+.id-number-display { clear: both; margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(56,189,248,.2); font-family: 'Courier New', monospace; font-size: 16px; letter-spacing: 3px; color: var(--accent2); text-align: center; }
+
+/* info grid */
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.info-item { background: var(--card2); border-radius: 12px; padding: 14px; border: 1px solid var(--border); }
+.info-item.wide { grid-column: 1/-1; }
+.info-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.info-value { font-size: 16px; font-weight: 500; color: var(--text); }
+.info-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* age bar */
+.age-bar-wrap { background: var(--card); border-radius: 4px; height: 8px; margin: 8px 0; overflow: hidden; }
+.age-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+
+/* zodiac + birth */
+.zodiac-section { display: flex; gap: 10px; flex-wrap: wrap; }
+.zodiac-badge { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; font-size: 14px; text-align: center; }
+.zodiac-icon { font-size: 24px; margin-bottom: 4px; }
+
+/* region breakdown */
+.region-breakdown { display: flex; gap: 0; }
+.region-item { flex: 1; text-align: center; padding: 10px 8px; border-right: 1px solid var(--border); }
+.region-item:last-child { border-right: none; }
+.region-code { font-family: 'Courier New', monospace; font-size: 14px; color: var(--accent2); margin-bottom: 4px; }
+.region-label { font-size: 11px; color: var(--muted); }
+
+/* highlight digits */
+.digit-highlight { display: flex; gap: 2px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+.digit { width: 22px; height: 28px; display: flex; align-items: center; justify-content: center; font-family: 'Courier New', monospace; font-size: 13px; border-radius: 4px; background: var(--card); border: 1px solid var(--border); }
+.digit.province { border-color: #7c3aed; color: #a855f7; }
+.digit.city { border-color: #0ea5e9; color: #38bdf8; }
+.digit.district { border-color: #18a87a; color: #34d399; }
+.digit.birth { border-color: #f48c06; color: #fbbf24; }
+.digit.seq { border-color: #e85d04; color: #fb923c; }
+.digit.check { border-color: #ec4899; color: #f472b6; }
+
+.legend { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back-btn" href="index.html">← 返回</a>
+  <span class="topbar-title">🪪 身份证信息解析</span>
+</div>
+
+<div class="hero">
+  <div class="hero-icon">🔍</div>
+  <h1>身份证信息解析</h1>
+  <p>籍贯 · 生日 · 年龄 · 校验码 · 星座生肖</p>
+</div>
+
+<div class="container">
+
+  <div class="privacy-notice">
+    <div class="icon">🛡️</div>
+    <p><strong>隐私安全</strong>：所有解析在本地浏览器完成，<strong>不上传任何信息到服务器</strong>，关闭页面数据即清除。</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🪪 输入身份证号码</div>
+    <div class="id-input-wrap">
+      <input class="id-input" type="text" id="id-input" maxlength="18" placeholder="请输入18位居民身份证号码" oninput="validateInput()" autocomplete="off">
+      <button class="id-clear" onclick="clearInput()">✕</button>
+    </div>
+    <div class="id-status" id="id-status"></div>
+    <button class="parse-btn" onclick="parseID()">🔍 解析身份证信息</button>
+  </div>
+
+  <div class="result-section" id="result-section">
+
+    <!-- ID card visual -->
+    <div class="id-card-visual">
+      <div class="id-avatar" id="avatar">👤</div>
+      <div class="id-card-info">
+        <div class="id-card-name" id="card-name">—</div>
+        <div class="id-card-field">性别：<span id="card-gender">—</span></div>
+        <div class="id-card-field">出生：<span id="card-birth">—</span></div>
+        <div class="id-card-field">籍贯：<span id="card-region">—</span></div>
+      </div>
+      <div class="id-number-display" id="card-number-display"></div>
+    </div>
+
+    <!-- 数字结构解析 -->
+    <div class="card">
+      <div class="card-title">🔢 号码结构解析</div>
+      <div class="digit-highlight" id="digit-row"></div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#7c3aed"></div>省级(2位)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#0ea5e9"></div>地市(2位)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#18a87a"></div>区县(2位)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f48c06"></div>出生(8位)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#e85d04"></div>顺序码(3位)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ec4899"></div>校验码(1位)</div>
+      </div>
+    </div>
+
+    <!-- 详细信息 -->
+    <div class="card">
+      <div class="card-title">📋 详细信息</div>
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">性别</div>
+          <div class="info-value" id="info-gender">—</div>
+          <div class="info-sub" id="info-gender-sub"></div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">年龄</div>
+          <div class="info-value" id="info-age">—</div>
+          <div class="info-sub" id="info-age-sub"></div>
+        </div>
+        <div class="info-item wide">
+          <div class="info-label">出生日期</div>
+          <div class="info-value" id="info-birth">—</div>
+          <div class="age-bar-wrap"><div class="age-bar-fill" id="age-bar-fill" style="width:0%"></div></div>
+          <div class="info-sub" id="info-birth-sub"></div>
+        </div>
+        <div class="info-item wide">
+          <div class="info-label">籍贯地区</div>
+          <div class="info-value" id="info-region">—</div>
+          <div style="margin-top:10px;background:var(--card);border-radius:8px;overflow:hidden;border:1px solid var(--border);">
+            <div class="region-breakdown">
+              <div class="region-item"><div class="region-code" id="r-prov-code"></div><div class="region-label">省级代码</div></div>
+              <div class="region-item"><div class="region-code" id="r-city-code"></div><div class="region-label">地市代码</div></div>
+              <div class="region-item"><div class="region-code" id="r-dist-code"></div><div class="region-label">区县代码</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">星座</div>
+          <div class="info-value" id="info-constellation">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">生肖</div>
+          <div class="info-value" id="info-zodiac">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">顺序码</div>
+          <div class="info-value" id="info-seq">—</div>
+          <div class="info-sub" id="info-seq-sub"></div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">校验码</div>
+          <div class="info-value" id="info-check">—</div>
+          <div class="info-sub" id="info-check-sub"></div>
+        </div>
+        <div class="info-item wide">
+          <div class="info-label">下次生日</div>
+          <div class="info-value" id="info-next-birthday">—</div>
+          <div class="info-sub" id="info-birthday-days"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+// 省级代码表
+const provinces = {
+  '11':'北京市','12':'天津市','13':'河北省','14':'山西省','15':'内蒙古自治区',
+  '21':'辽宁省','22':'吉林省','23':'黑龙江省','31':'上海市','32':'江苏省',
+  '33':'浙江省','34':'安徽省','35':'福建省','36':'江西省','37':'山东省',
+  '41':'河南省','42':'湖北省','43':'湖南省','44':'广东省','45':'广西壮族自治区',
+  '46':'海南省','50':'重庆市','51':'四川省','52':'贵州省','53':'云南省',
+  '54':'西藏自治区','61':'陕西省','62':'甘肃省','63':'青海省','64':'宁夏回族自治区',
+  '65':'新疆维吾尔自治区','71':'台湾省','81':'香港特别行政区','82':'澳门特别行政区'
+};
+
+const constellations = [
+  {name:'摩羯座',emoji:'♑',end:[1,19]},{name:'水瓶座',emoji:'♒',end:[2,18]},
+  {name:'双鱼座',emoji:'♓',end:[3,20]},{name:'白羊座',emoji:'♈',end:[4,19]},
+  {name:'金牛座',emoji:'♉',end:[5,20]},{name:'双子座',emoji:'♊',end:[6,20]},
+  {name:'巨蟹座',emoji:'♋',end:[7,22]},{name:'狮子座',emoji:'♌',end:[8,22]},
+  {name:'处女座',emoji:'♍',end:[9,22]},{name:'天秤座',emoji:'♎',end:[10,22]},
+  {name:'天蝎座',emoji:'♏',end:[11,21]},{name:'射手座',emoji:'♐',end:[12,21]},
+  {name:'摩羯座',emoji:'♑',end:[12,31]}
+];
+
+const zodiacs = ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'];
+const zodiacEmojis = ['🐭','🐮','🐯','🐰','🐲','🐍','🐴','🐑','🐵','🐔','🐶','🐷'];
+
+function validateInput() {
+  const val = document.getElementById('id-input').value.toUpperCase();
+  document.getElementById('id-input').value = val;
+  const statusEl = document.getElementById('id-status');
+  if (val.length === 0) { statusEl.textContent = ''; return; }
+  if (val.length < 18) { statusEl.innerHTML = `<span class="status-err">还需输入 ${18 - val.length} 位</span>`; return; }
+  if (val.length === 18) {
+    if (checkID(val)) statusEl.innerHTML = '<span class="status-ok">✓ 格式验证通过</span>';
+    else statusEl.innerHTML = '<span class="status-err">✗ 校验码不匹配，请检查号码是否正确</span>';
+  }
+}
+
+function clearInput() {
+  document.getElementById('id-input').value = '';
+  document.getElementById('id-status').textContent = '';
+  document.getElementById('result-section').style.display = 'none';
+}
+
+function checkID(id) {
+  const weights = [7,9,10,5,8,4,2,1,6,3,7,9,10,5,8,4,2];
+  const checkChars = '10X98765432';
+  let sum = 0;
+  for (let i = 0; i < 17; i++) sum += parseInt(id[i]) * weights[i];
+  return checkChars[sum % 11] === id[17];
+}
+
+function getConstellation(month, day) {
+  for (const c of constellations) {
+    if (month < c.end[0] || (month === c.end[0] && day <= c.end[1])) return c;
+  }
+  return constellations[0];
+}
+
+function parseID() {
+  const id = document.getElementById('id-input').value.toUpperCase().trim();
+  if (id.length !== 18) { alert('请输入完整的18位身份证号码'); return; }
+
+  const provCode = id.substring(0, 2);
+  const cityCode = id.substring(2, 4);
+  const distCode = id.substring(4, 6);
+  const birthYear = parseInt(id.substring(6, 10));
+  const birthMonth = parseInt(id.substring(10, 12));
+  const birthDay = parseInt(id.substring(12, 14));
+  const seqCode = id.substring(14, 17);
+  const checkCode = id[17];
+  const gender = parseInt(seqCode) % 2 === 0 ? '女' : '男';
+  const genderEmoji = gender === '男' ? '👨' : '👩';
+
+  const provName = provinces[provCode] || '未知地区';
+  const today = new Date();
+  let age = today.getFullYear() - birthYear;
+  if (today.getMonth() + 1 < birthMonth || (today.getMonth() + 1 === birthMonth && today.getDate() < birthDay)) age--;
+
+  const birthDate = new Date(birthYear, birthMonth - 1, birthDay);
+  const agePercent = Math.min((age / 100) * 100, 100);
+
+  const constellation = getConstellation(birthMonth, birthDay);
+  const zodiacIdx = (birthYear - 1900) % 12;
+  const zodiac = zodiacs[(zodiacIdx + 12) % 12];
+  const zodiacEmoji = zodiacEmojis[(zodiacIdx + 12) % 12];
+
+  // Next birthday
+  let nextBirthday = new Date(today.getFullYear(), birthMonth - 1, birthDay);
+  if (nextBirthday <= today) nextBirthday.setFullYear(today.getFullYear() + 1);
+  const daysToNext = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
+
+  // check validity
+  const isValid = checkID(id);
+
+  // Fill card visual
+  document.getElementById('avatar').textContent = genderEmoji;
+  document.getElementById('card-name').textContent = gender === '男' ? '姓名（男）' : '姓名（女）';
+  document.getElementById('card-gender').textContent = gender;
+  document.getElementById('card-birth').textContent = `${birthYear}年${birthMonth}月${birthDay}日`;
+  document.getElementById('card-region').textContent = provName;
+
+  // Digit highlighting
+  const types = ['province','province','city','city','district','district',
+    'birth','birth','birth','birth','birth','birth','birth','birth',
+    'seq','seq','seq','check'];
+  document.getElementById('digit-row').innerHTML = id.split('').map((d, i) =>
+    `<div class="digit ${types[i]}">${d}</div>`).join('');
+
+  // Number display
+  document.getElementById('card-number-display').textContent = id.replace(/(.{6})(.{8})(.{4})/, '$1 $2 $3');
+
+  // Info fields
+  document.getElementById('info-gender').textContent = genderEmoji + ' ' + gender;
+  document.getElementById('info-gender-sub').textContent = `顺序码 ${seqCode} 末位${parseInt(seqCode) % 2 === 0 ? '偶数→女' : '奇数→男'}`;
+  document.getElementById('info-age').textContent = age + ' 岁';
+  document.getElementById('info-age-sub').textContent = '虚岁 ' + (age + 1) + ' 岁';
+  document.getElementById('info-birth').textContent = `${birthYear}年${birthMonth}月${birthDay}日`;
+  document.getElementById('age-bar-fill').style.width = agePercent + '%';
+  document.getElementById('info-birth-sub').textContent = `出生至今 ${Math.floor((today - birthDate) / (1000*60*60*24))} 天`;
+  document.getElementById('info-region').textContent = provName;
+  document.getElementById('r-prov-code').textContent = provCode;
+  document.getElementById('r-city-code').textContent = cityCode;
+  document.getElementById('r-dist-code').textContent = distCode;
+  document.getElementById('info-constellation').textContent = constellation.emoji + ' ' + constellation.name;
+  document.getElementById('info-zodiac').textContent = zodiacEmoji + ' ' + zodiac + '年';
+  document.getElementById('info-seq').textContent = seqCode;
+  document.getElementById('info-seq-sub').textContent = `本地区当日第 ${parseInt(seqCode)} 个出生`;
+  document.getElementById('info-check').textContent = checkCode + (isValid ? ' ✓' : ' ✗');
+  document.getElementById('info-check-sub').textContent = isValid ? '校验码正确' : '校验码错误，号码可能有误';
+  document.getElementById('info-next-birthday').textContent = `${nextBirthday.getFullYear()}年${birthMonth}月${birthDay}日`;
+  document.getElementById('info-birthday-days').textContent = daysToNext === 0 ? '🎂 今天就是生日！' : `还有 ${daysToNext} 天`;
+
+  document.getElementById('result-section').style.display = 'block';
+  document.getElementById('result-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+</script>
+</body>
+</html>

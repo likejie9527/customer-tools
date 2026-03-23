@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>预产期 & 孕周计算器</title>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fdf2f8;--card:#fff;--ink:#1a0019;--muted:#78716c;--accent:#c026d3;--border:#f0abfc;--pink:#ec4899;--green:#16a34a;--blue:#2563eb;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+.topbar{background:#1a0019;color:#fff;padding:0 20px;height:56px;display:flex;align-items:center;gap:16px;}
+.topbar a{color:#e879f9;text-decoration:none;font-size:.85rem;}.topbar a:hover{color:#fff;}
+.topbar-title{font-family:'ZCOOL XiaoWei',serif;font-size:1.1rem;}
+.container{max-width:800px;margin:0 auto;padding:24px 16px 60px;}
+.page-title{text-align:center;padding:24px 0 20px;}
+.page-title h1{font-family:'ZCOOL XiaoWei',serif;font-size:2rem;letter-spacing:2px;}
+.page-title h1 span{color:var(--accent);}
+.page-title p{color:var(--muted);font-size:.9rem;margin-top:6px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px;margin-bottom:18px;}
+.card-title{font-size:.95rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.ad-bar{background:#fdf2f8;border:1px dashed #f0abfc;border-radius:10px;padding:12px;text-align:center;color:#7e22ce;font-size:.8rem;margin-bottom:16px;}
+
+.form-group label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:6px;font-weight:600;}
+.form-group input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'Noto Sans SC',sans-serif;font-size:.95rem;outline:none;transition:border-color .2s;background:#fff;}
+.form-group input:focus{border-color:var(--accent);}
+.calc-btn{width:100%;padding:14px;margin-top:16px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;font-family:'Noto Sans SC',sans-serif;cursor:pointer;transition:all .2s;}
+.calc-btn:hover{background:#a21caf;}
+
+/* RESULT */
+.result-section{display:none;}
+.result-section.show{display:block;animation:fadeUp .4s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+
+.due-hero{
+  background:linear-gradient(135deg,#fdf2f8,#fce7f3);
+  border:2px solid var(--accent);border-radius:16px;
+  text-align:center;padding:28px 20px;margin-bottom:20px;
+}
+.due-date{font-family:'ZCOOL XiaoWei',serif;font-size:2.4rem;color:var(--accent);line-height:1;}
+.due-label{font-size:.85rem;color:var(--muted);margin-top:6px;}
+.due-week{font-size:1.1rem;font-weight:700;color:var(--pink);margin-top:10px;}
+
+.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+@media(max-width:480px){.info-grid{grid-template-columns:1fr 1fr;}}
+.info-item{background:var(--bg);border-radius:12px;padding:14px;text-align:center;}
+.info-val{font-family:'ZCOOL XiaoWei',serif;font-size:1.5rem;color:var(--accent);}
+.info-name{font-size:.72rem;color:var(--muted);margin-top:3px;}
+
+/* PROGRESS */
+.preg-bar{margin:16px 0;}
+.bar-label{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);margin-bottom:5px;}
+.bar-outer{height:16px;border-radius:8px;background:#f3e8ff;overflow:hidden;}
+.bar-inner{height:100%;border-radius:8px;background:linear-gradient(to right,#e879f9,#c026d3);transition:width .6s ease;}
+.trimester-labels{display:flex;justify-content:space-between;font-size:.72rem;margin-top:4px;}
+.tri-badge{padding:2px 8px;border-radius:10px;font-size:.72rem;font-weight:700;}
+.tri-1{background:#fce7f3;color:#be185d;}
+.tri-2{background:#ede9fe;color:#7c3aed;}
+.tri-3{background:#fff7ed;color:#c2410c;}
+
+/* DEVELOPMENT TABLE */
+.dev-table{display:flex;flex-direction:column;gap:0;}
+.dev-week{
+  display:flex;align-items:flex-start;gap:16px;
+  padding:14px 0;border-bottom:1px solid var(--border);
+  cursor:pointer;
+}
+.dev-week:last-child{border:none;}
+.dev-week.current{background:linear-gradient(135deg,#fdf2f8,#fff);margin:0 -22px;padding:14px 22px;border-radius:12px;}
+.dev-num{
+  width:44px;height:44px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'ZCOOL XiaoWei',serif;font-size:.9rem;font-weight:700;
+  flex-shrink:0;background:var(--bg);color:var(--muted);border:2px solid var(--border);
+}
+.dev-num.current-num{background:var(--accent);color:#fff;border-color:var(--accent);}
+.dev-info{}
+.dev-week-label{font-size:.75rem;color:var(--muted);margin-bottom:2px;}
+.dev-title{font-size:.88rem;font-weight:700;color:var(--ink);}
+.dev-desc{font-size:.82rem;color:var(--muted);line-height:1.6;margin-top:3px;}
+.dev-emoji{font-size:1.3rem;margin-right:4px;}
+.current-badge{font-size:.7rem;background:var(--accent);color:#fff;padding:1px 7px;border-radius:8px;margin-left:6px;}
+
+/* SAVE */
+.save-btn{width:100%;padding:11px;border:1.5px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;font-family:'Noto Sans SC',sans-serif;font-size:.85rem;transition:all .2s;color:var(--muted);}
+.save-btn:hover{border-color:var(--accent);color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="index.html">← 返回首页</a><span style="color:#555">/</span>
+  <span class="topbar-title">🤱 预产期 & 孕周计算器</span>
+</div>
+<div class="container">
+  <div class="page-title">
+    <h1>预产期<span>孕周</span>计算器</h1>
+    <p>末次月经 · 预产期推算 · 孕期发育进度 · 每周提示</p>
+  </div>
+  <div class="ad-bar">📢 广告位 · 母婴用品 / 孕产护理类合作欢迎联系</div>
+
+  <div class="card">
+    <div class="card-title">📋 基本信息</div>
+    <div class="form-group" style="margin-bottom:14px;">
+      <label>末次月经开始日期（LMP）</label>
+      <input type="date" id="lmp-date">
+    </div>
+    <div class="form-group">
+      <label>月经周期（天）</label>
+      <input type="number" id="cycle-days" value="28" min="21" max="45">
+    </div>
+    <div style="font-size:.78rem;color:var(--muted);margin-top:8px;background:var(--bg);padding:10px;border-radius:8px;">
+      💡 预产期 = 末次月经 + 280天（基于28天周期），周期不同会相应调整
+    </div>
+    <button class="calc-btn" onclick="calculate()">计算预产期</button>
+  </div>
+
+  <div class="result-section" id="result-section">
+    <div class="card">
+      <div class="due-hero">
+        <div class="due-label">预计预产期</div>
+        <div class="due-date" id="due-date">--</div>
+        <div class="due-week" id="current-week-display">--</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:6px;" id="days-remain"></div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-item"><div class="info-val" id="curr-week">--</div><div class="info-name">当前孕周</div></div>
+        <div class="info-item"><div class="info-val" id="curr-day">--</div><div class="info-name">当前孕天</div></div>
+        <div class="info-item"><div class="info-val" id="trimester">--</div><div class="info-name">孕期阶段</div></div>
+        <div class="info-item"><div class="info-val" id="days-preg">--</div><div class="info-name">已孕天数</div></div>
+        <div class="info-item"><div class="info-val" id="remain-weeks">--</div><div class="info-name">距分娩（周）</div></div>
+        <div class="info-item"><div class="info-val" id="conceived-date">--</div><div class="info-name">约排卵日</div></div>
+      </div>
+
+      <div class="preg-bar">
+        <div class="bar-label">
+          <span>孕期进度</span>
+          <span id="prog-pct">0%</span>
+        </div>
+        <div class="bar-outer"><div class="bar-inner" id="preg-progress" style="width:0%"></div></div>
+        <div class="trimester-labels">
+          <span class="tri-badge tri-1">孕早期 1-12周</span>
+          <span class="tri-badge tri-2">孕中期 13-27周</span>
+          <span class="tri-badge tri-3">孕晚期 28-40周</span>
+        </div>
+      </div>
+
+      <button class="save-btn" onclick="saveRecord()">💾 保存孕期记录</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">👶 孕期发育对照表</div>
+      <div class="dev-table" id="dev-table"></div>
+    </div>
+  </div>
+
+  <div class="ad-bar">🍼 母婴好物推荐 · 孕期必备清单 · 专业孕育知识</div>
+</div>
+<script>
+const DEV_DATA = [
+  {week:4, emoji:'🫘', title:'胚胎着床', desc:'受精卵完成着床，胚胎如芝麻大小（约0.2mm），心脏原基开始形成。可能出现轻微着床出血。'},
+  {week:5, emoji:'🌱', title:'心脏开始跳动', desc:'心脏原基开始跳动，神经管、大脑和脊髓开始发育。胚胎约2mm大小，形似小蝌蚪。'},
+  {week:6, emoji:'🐟', title:'面部特征形成', desc:'眼睛、耳朵、鼻子开始分化，手臂和腿的芽突出现。胚胎约6mm，心跳约100-160次/分。'},
+  {week:7, emoji:'🫐', title:'器官快速发育', desc:'胃、肠、肺、肾脏开始发育。胚胎约12mm，大脑发育迅速，面部更清晰。'},
+  {week:8, emoji:'🍇', title:'开始成为"胎儿"', desc:'所有主要器官已初步形成，可称为胎儿。长约16mm，已有手指和脚趾雏形，会轻微运动。'},
+  {week:9, emoji:'🍒', title:'外生殖器出现', desc:'外生殖器开始分化，眼睑发育。长约23mm，肌肉开始响应神经信号，胎动开始但妈妈感觉不到。'},
+  {week:10, emoji:'🍓', title:'五官成形', desc:'眼睛、耳朵、嘴、鼻子都已成形。长约31mm，有指纹原基，牙齿开始在牙龈内形成。'},
+  {week:12, emoji:'🍋', title:'进入孕中期前夕', desc:'所有器官已形成。长约6cm，开始吞咽羊水。早孕反应通常开始减轻。流产风险大幅下降。'},
+  {week:16, emoji:'🥝', title:'听到声音', desc:'胎儿能听到外界声音，开始有眼球运动。长约12cm，可感受光线变化，四肢活动协调。'},
+  {week:20, emoji:'🍌', title:'感受胎动', desc:'大多数妈妈开始感受到明显胎动。长约25cm，头发开始生长，皮肤有胎脂保护。可以通过B超确定性别。'},
+  {week:24, emoji:'🌽', title:'肺部开始发育', desc:'肺表面活性物质开始分泌，神经系统快速发展。长约30cm，已有完整五感，能区分甜苦味道。'},
+  {week:28, emoji:'🥬', title:'进入孕晚期', desc:'大脑快速发育，睁眼闭眼更频繁。长约35cm，胎位开始固定，皮下脂肪增多，体重约1kg。'},
+  {week:32, emoji:'🥦', title:'全面成熟前准备', desc:'肺部基本发育完成。长约42cm，体重约1.8kg，皮肤变光滑，指甲已长至指尖。'},
+  {week:36, emoji:'🍉', title:'接近足月', desc:'大多数器官已成熟。长约47cm，体重约2.7kg，胎位多为头位，头部可能已入盆。'},
+  {week:38, emoji:'🫅', title:'足月准备', desc:'宝宝已完全发育，随时可以出生。长约50cm，体重约3-3.5kg，哭声洪亮，吸吮能力强。'},
+  {week:40, emoji:'🎉', title:'预产期到来', desc:'宝宝已完全成熟！头围约34cm，体重通常在3-3.5kg。预产期前后两周都属于正常范围。'},
+];
+
+function calculate() {
+  const lmpStr = document.getElementById('lmp-date').value;
+  const cycle = parseInt(document.getElementById('cycle-days').value) || 28;
+  if (!lmpStr) { alert('请选择末次月经日期'); return; }
+
+  const lmp = new Date(lmpStr);
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  // Adjust for cycle
+  const daysAdj = cycle - 28;
+  const dueDateMs = lmp.getTime() + (280 + daysAdj) * 86400000;
+  const dueDate = new Date(dueDateMs);
+
+  // Ovulation
+  const ovulation = new Date(lmp.getTime() + (14 + daysAdj) * 86400000);
+
+  const daysPregnant = Math.max(0, Math.round((today - lmp) / 86400000));
+  const weeksPregnant = Math.floor(daysPregnant / 7);
+  const daysInWeek = daysPregnant % 7;
+  const remainDays = Math.round((dueDate - today) / 86400000);
+  const remainWeeks = Math.floor(Math.max(0, remainDays) / 7);
+  const pct = Math.min(100, Math.max(0, (daysPregnant / 280 * 100)));
+
+  let trimester;
+  if (weeksPregnant < 13) trimester = '孕早期';
+  else if (weeksPregnant < 28) trimester = '孕中期';
+  else trimester = '孕晚期';
+
+  document.getElementById('due-date').textContent = dueDate.toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('current-week-display').textContent = `目前怀孕第 ${weeksPregnant} 周 +${daysInWeek} 天`;
+  document.getElementById('days-remain').textContent = remainDays > 0 ? `距预产期还有 ${remainDays} 天（约 ${remainWeeks} 周）` : remainDays === 0 ? '🎉 今天就是预产期！' : `已超预产期 ${-remainDays} 天`;
+
+  document.getElementById('curr-week').textContent = weeksPregnant + '周';
+  document.getElementById('curr-day').textContent = '+' + daysInWeek + '天';
+  document.getElementById('trimester').textContent = trimester;
+  document.getElementById('days-preg').textContent = daysPregnant + '天';
+  document.getElementById('remain-weeks').textContent = Math.max(0,remainWeeks) + '周';
+  document.getElementById('conceived-date').textContent = ovulation.toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});
+
+  document.getElementById('prog-pct').textContent = pct.toFixed(1) + '%';
+  document.getElementById('preg-progress').style.width = pct + '%';
+
+  // Dev table
+  const table = document.getElementById('dev-table');
+  table.innerHTML = DEV_DATA.map(d => {
+    const isCurrent = d.week === weeksPregnant || (d.week > weeksPregnant && DEV_DATA.find(x=>x.week<d.week&&x.week>weeksPregnant-8)===undefined && d===DEV_DATA.find(x=>x.week>=weeksPregnant));
+    const passed = d.week < weeksPregnant;
+    return `<div class="dev-week ${isCurrent?'current':''}">
+      <div class="dev-num ${isCurrent?'current-num':''}${passed?' '+(d.week<weeksPregnant?'':''):''}" style="${passed?'background:#f3e8ff;color:var(--accent);border-color:var(--accent);opacity:.6':''}">
+        ${d.week}w
+      </div>
+      <div class="dev-info">
+        <div class="dev-week-label">第 ${d.week} 周${passed?' · ✓已过':''}${isCurrent?' · 📍当前':''}</div>
+        <div class="dev-title">${d.emoji} ${d.title}${isCurrent?'<span class="current-badge">本周</span>':''}</div>
+        <div class="dev-desc">${d.desc}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('result-section').classList.add('show');
+}
+
+function saveRecord() {
+  const due = document.getElementById('due-date').textContent;
+  const week = document.getElementById('current-week-display').textContent;
+  const key = 'pregnancy_record';
+  localStorage.setItem(key, JSON.stringify({
+    lmp: document.getElementById('lmp-date').value,
+    cycle: document.getElementById('cycle-days').value,
+    savedAt: new Date().toISOString()
+  }));
+  alert('✅ 已保存孕期记录到本地');
+}
+
+// Load saved record
+const saved = JSON.parse(localStorage.getItem('pregnancy_record')||'null');
+if (saved) {
+  document.getElementById('lmp-date').value = saved.lmp;
+  if (saved.cycle) document.getElementById('cycle-days').value = saved.cycle;
+}
+
+// Set default to today minus 8 weeks
+const defDate = new Date(); defDate.setDate(defDate.getDate()-56);
+if (!saved) document.getElementById('lmp-date').value = defDate.toISOString().split('T')[0];
+</script>
+</body>
+</html>

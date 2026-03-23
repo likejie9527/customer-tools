@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>汉字转拼音工具</title>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff5f7;--card:#fff;--ink:#1a0010;--muted:#78716c;--accent:#db2777;--border:#fbcfe8;--green:#059669;--blue:#2563eb;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+.topbar{background:#1a0010;color:#fff;padding:0 20px;height:56px;display:flex;align-items:center;gap:16px;}
+.topbar a{color:#f9a8d4;text-decoration:none;font-size:.85rem;}.topbar a:hover{color:#fff;}
+.topbar-title{font-family:'ZCOOL XiaoWei',serif;font-size:1.1rem;}
+.container{max-width:820px;margin:0 auto;padding:24px 16px 60px;}
+.page-title{text-align:center;padding:24px 0 20px;}
+.page-title h1{font-family:'ZCOOL XiaoWei',serif;font-size:2rem;letter-spacing:2px;}
+.page-title h1 span{color:var(--accent);}
+.page-title p{color:var(--muted);font-size:.9rem;margin-top:6px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px;margin-bottom:18px;}
+.card-title{font-size:.95rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.ad-bar{background:#fff0f6;border:1px dashed #f9a8d4;border-radius:10px;padding:12px;text-align:center;color:#9d174d;font-size:.8rem;margin-bottom:16px;}
+
+/* OPTIONS */
+.options-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.opt-btn{padding:8px 16px;border:1.5px solid var(--border);border-radius:20px;background:#fff;cursor:pointer;font-family:'Noto Sans SC',sans-serif;font-size:.83rem;transition:all .2s;}
+.opt-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;}
+.opt-btn:hover:not(.active){border-color:var(--accent);color:var(--accent);}
+
+/* TEXTAREA */
+textarea{
+  width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;
+  font-family:'Noto Sans SC',sans-serif;font-size:.95rem;resize:vertical;outline:none;
+  line-height:1.8;height:140px;transition:border-color .2s;background:#fff;
+}
+textarea:focus{border-color:var(--accent);}
+textarea.output{background:#fff5f7;color:#831843;font-size:.9rem;height:160px;}
+
+/* CONVERT BTN */
+.convert-btn{
+  width:100%;padding:14px;margin-top:10px;
+  background:var(--accent);color:#fff;border:none;border-radius:12px;
+  font-size:1rem;font-weight:700;font-family:'Noto Sans SC',sans-serif;cursor:pointer;
+  transition:all .2s;
+}
+.convert-btn:hover{background:#be185d;}
+
+/* DISPLAY MODES */
+.display-wrap{margin-top:14px;}
+.py-block{display:inline-block;margin:4px 6px;text-align:center;vertical-align:top;}
+.py-char{font-size:1.3rem;line-height:1.4;color:var(--ink);}
+.py-reading{font-size:.75rem;color:var(--accent);line-height:1;}
+
+/* COPY ROW */
+.copy-row{display:flex;gap:8px;margin-top:12px;}
+.copy-btn{flex:1;padding:10px;border:1px solid var(--border);border-radius:9px;background:#fff;cursor:pointer;font-family:'Noto Sans SC',sans-serif;font-size:.83rem;transition:all .2s;color:var(--muted);}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* REFERENCE TABLE */
+.ref-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;}
+.ref-item{background:var(--bg);border-radius:8px;padding:9px 12px;font-size:.82rem;}
+.ref-item .hanzi{font-size:1.1rem;color:var(--ink);}
+.ref-item .pinyin{color:var(--accent);font-size:.8rem;}
+
+/* HISTORY */
+.hist-item{padding:10px 14px;background:var(--bg);border-radius:9px;margin-bottom:7px;font-size:.83rem;display:flex;justify-content:space-between;align-items:center;}
+.hist-del{background:none;border:none;color:#d1d5db;cursor:pointer;font-size:.9rem;padding:2px;}
+.hist-del:hover{color:#ef4444;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="index.html">← 返回首页</a><span style="color:#555">/</span>
+  <span class="topbar-title">🈵 汉字转拼音工具</span>
+</div>
+<div class="container">
+  <div class="page-title">
+    <h1>汉字<span>转拼音</span></h1>
+    <p>带声调/无声调 · 多格式输出 · 批量处理 · 支持姓名拼音</p>
+  </div>
+  <div class="ad-bar">📢 广告位 · 起名服务 / 教育类合作欢迎联系</div>
+
+  <div class="card">
+    <div class="card-title">⚙️ 转换选项</div>
+    <div style="margin-bottom:10px;">
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:6px;">声调显示</div>
+      <div class="options-row">
+        <button class="opt-btn active" id="opt-tone1" onclick="setTone('tone')">ā带声调</button>
+        <button class="opt-btn" id="opt-tone2" onclick="setTone('notone')">a无声调</button>
+        <button class="opt-btn" id="opt-tone3" onclick="setTone('num')">a1数字声调</button>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:6px;">输出格式</div>
+      <div class="options-row">
+        <button class="opt-btn active" id="fmt-space" onclick="setFmt('space')">空格分隔</button>
+        <button class="opt-btn" id="fmt-above" onclick="setFmt('above')">拼音标注在字上</button>
+        <button class="opt-btn" id="fmt-inline" onclick="setFmt('inline')">行内括号 汉(hàn)</button>
+        <button class="opt-btn" id="fmt-first" onclick="setFmt('first')">首字母缩写</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📝 输入汉字</div>
+    <textarea id="input-text" placeholder="在此输入汉字，支持多行批量处理...&#10;例：中国北京上海深圳&#10;你好世界"></textarea>
+    <button class="convert-btn" onclick="convertPinyin()">转换为拼音</button>
+
+    <div id="result-area" style="display:none;margin-top:16px;">
+      <div class="card-title">📤 转换结果</div>
+      <div id="display-result"></div>
+      <textarea class="output" id="text-result" readonly style="margin-top:12px;"></textarea>
+      <div class="copy-row">
+        <button class="copy-btn" onclick="copyResult()">📋 复制拼音文本</button>
+        <button class="copy-btn" onclick="clearAll()">🗑 清空</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUICK REFERENCE -->
+  <div class="card">
+    <div class="card-title">📚 声母韵母速查</div>
+    <div style="margin-bottom:12px;">
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:8px;">声母（21个）</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        {b p m f d t n l g k h j q x zh ch sh r z c s y w}
+          .replace(/{(.+)}/,'$1').trim().split(' ').map(s=>`<span style="display:inline-block;background:var(--bg);border-radius:6px;padding:4px 10px;font-size:.88rem;color:var(--accent);font-weight:700;">${s}</span>`).join('')
+      </div>
+    </div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:8px;">常见多音字</div>
+    <div class="ref-grid">
+      <div class="ref-item"><span class="hanzi">的</span> <span class="pinyin">de / dí / dì / dī</span></div>
+      <div class="ref-item"><span class="hanzi">地</span> <span class="pinyin">dì / de</span></div>
+      <div class="ref-item"><span class="hanzi">得</span> <span class="pinyin">dé / de / děi</span></div>
+      <div class="ref-item"><span class="hanzi">长</span> <span class="pinyin">cháng / zhǎng</span></div>
+      <div class="ref-item"><span class="hanzi">行</span> <span class="pinyin">xíng / háng</span></div>
+      <div class="ref-item"><span class="hanzi">中</span> <span class="pinyin">zhōng / zhòng</span></div>
+      <div class="ref-item"><span class="hanzi">重</span> <span class="pinyin">zhòng / chóng</span></div>
+      <div class="ref-item"><span class="hanzi">好</span> <span class="pinyin">hǎo / hào</span></div>
+      <div class="ref-item"><span class="hanzi">乐</span> <span class="pinyin">lè / yuè</span></div>
+      <div class="ref-item"><span class="hanzi">为</span> <span class="pinyin">wéi / wèi</span></div>
+      <div class="ref-item"><span class="hanzi">都</span> <span class="pinyin">dōu / dū</span></div>
+      <div class="ref-item"><span class="hanzi">大</span> <span class="pinyin">dà / dài</span></div>
+    </div>
+  </div>
+
+  <div class="ad-bar">✏️ 宝宝起名服务 · AI取名 · 好名字从拼音开始</div>
+</div>
+<script>
+// Pinyin data - comprehensive mapping
+const PINYIN_MAP = {"的":"de","一":"yī","国":"guó","在":"zài","人":"rén","了":"le","有":"yǒu","中":"zhōng","是":"shì","年":"nián","和":"hé","大":"dà","业":"yè","不":"bù","为":"wèi","发":"fā","时":"shí","可":"kě","地":"dì","产":"chǎn","学":"xué","上":"shàng","以":"yǐ","工":"gōng","行":"xíng","我":"wǒ","国":"guó","要":"yào","着":"zhe","就":"jiù","出":"chū","也":"yě","得":"dé","里":"lǐ","后":"hòu","自":"zì","以":"yǐ","会":"huì","家":"jiā","可":"kě","下":"xià","而":"ér","过":"guò","天":"tiān","去":"qù","能":"néng","对":"duì","小":"xiǎo","多":"duō","然":"rán","于":"yú","心":"xīn","学":"xué","么":"me","之":"zhī","都":"dōu","好":"hǎo","看":"kàn","起":"qǐ","发":"fā","当":"dāng","没":"méi","成":"chéng","只":"zhǐ","如":"rú","事":"shì","把":"bǎ","还":"hái","用":"yòng","第":"dì","样":"yàng","道":"dào","得":"de","打":"dǎ","但":"dàn","质":"zhì","向":"xiàng","道":"dào","命":"mìng","此":"cǐ","变":"biàn","条":"tiáo","只":"zhǐ","没":"méi","结":"jié","解":"jiě","问":"wèn","意":"yì","建":"jiàn","月":"yuè","公":"gōng","无":"wú","系":"xì","军":"jūn","很":"hěn","情":"qíng","者":"zhě","制":"zhì","机":"jī","六":"liù","本":"běn","思":"sī","解":"jiě","立":"lì","河":"hé","村":"cūn","八":"bā","难":"nán","早":"zǎo","论":"lùn","吗":"ma","化":"huà","加":"jiā","动":"dòng","合":"hé","品":"pǐn","重":"zhòng","应":"yīng","开":"kāi","研":"yán","光":"guāng","水":"shuǐ","形":"xíng","量":"liàng","果":"guǒ","实":"shí","鼓":"gǔ","支":"zhī","所":"suǒ","且":"qiě","等":"děng","习":"xí","约":"yuē","前":"qián","具":"jù","示":"shì","术","shù","长":"cháng","场":"chǎng","员":"yuán","强":"qiáng","则":"zé","深":"shēn","刻":"kè","高":"gāo","信":"xìn","重":"chóng","其":"qí","必":"bì","场":"chǎng","名":"míng","万":"wàn","几":"jǐ","区":"qū","强":"qiáng","放":"fàng","由":"yóu","义":"yì","方":"fāng","体":"tǐ","保":"bǎo","持":"chí","教":"jiào","观":"guān","指":"zhǐ","创":"chuàng","三":"sān","入":"rù","基":"jī","目":"mù","注":"zhù","走":"zǒu","使":"shǐ","快":"kuài","度":"dù","已":"yǐ","政":"zhèng","新":"xīn","果":"guǒ","导":"dǎo","大":"dà","司":"sī","别":"bié","见":"jiàn","两":"liǎng","解":"jiě","用":"yòng","别":"bié","她":"tā","从":"cóng","高":"gāo","给":"gěi","效":"xiào","来":"lái","东":"dōng","西":"xī","南":"nán","北":"běi","京":"jīng","上":"shàng","海":"hǎi","深":"shēn","圳":"zhèn","广":"guǎng","州":"zhōu","成":"chéng","都":"dū","武":"wǔ","汉":"hàn","杭":"háng","宁":"níng","波":"bō","苏":"sū","州":"zhōu","天":"tiān","津":"jīn","重":"chóng","庆":"qìng","沈":"shěn","阳":"yáng","哈":"hā","尔":"ěr","滨":"bīn","长":"cháng","春":"chūn","吉":"jí","林":"lín","兰":"lán","州":"zhōu","西":"xī","安":"ān","郑":"zhèng","州":"zhōu","济":"jǐ","南":"nán","合":"hé","肥":"féi","南":"nán","昌":"chāng","福":"fú","州":"zhōu","厦":"xià","门":"mén","昆":"kūn","明":"míng","贵":"guì","阳":"yáng","拉":"lā","萨":"sà","乌":"wū","鲁":"lǔ","木":"mù","齐":"qí","你":"nǐ","好":"hǎo","谢":"xiè","爱":"ài","中":"zhōng","文":"wén","字":"zì","汉":"hàn","语":"yǔ","拼":"pīn","音":"yīn","声":"shēng","调":"diào","第":"dì","四":"sì","声":"shēng","一":"yī","二":"èr","三":"sān","五":"wǔ","七":"qī","九":"jiǔ","十":"shí","百":"bǎi","千":"qiān","零":"líng","红":"hóng","黄":"huáng","蓝":"lán","绿":"lǜ","白":"bái","黑":"hēi","紫":"zǐ","粉":"fěn","橙":"chéng","灰":"huī","猫":"māo","狗":"gǒu","鸟":"niǎo","鱼":"yú","马":"mǎ","牛":"niú","羊":"yáng","猪":"zhū","鸡":"jī","鸭":"yā","花":"huā","草":"cǎo","树":"shù","山":"shān","河":"hé","湖":"hú","海":"hǎi","云":"yún","雨":"yǔ","雪":"xuě","风":"fēng","火":"huǒ","土":"tǔ","金":"jīn","木":"mù","春":"chūn","夏":"xià","秋":"qiū","冬":"dōng","日":"rì","月":"yuè","星":"xīng","父":"fù","母":"mǔ","兄":"xiōng","弟":"dì","姐":"jiě","妹":"mèi","子":"zǐ","女":"nǚ","朋":"péng","友":"yǒu","老":"lǎo","师":"shī","同":"tóng","学":"xué","书":"shū","笔":"bǐ","纸":"zhǐ","桌":"zhuō","椅":"yǐ","门":"mén","窗":"chuāng","房":"fáng","路":"lù","车":"chē","船":"chuán","飞":"fēi","机":"jī","电":"diàn","话":"huà","手":"shǒu","眼":"yǎn","耳":"ěr","鼻":"bí","口":"kǒu","心":"xīn","头":"tóu","脚":"jiǎo","衣":"yī","食":"shí","住":"zhù","行":"xíng","吃":"chī","喝":"hē","睡":"shuì","玩":"wán","跑":"pǎo","跳":"tiào","唱":"chàng","画":"huà","写":"xiě","读":"dú","说":"shuō","听":"tīng","看":"kàn","笑":"xiào","哭":"kū","美":"měi","丽":"lì","可":"kě","爱":"ài","聪":"cōng","明":"míng","勤":"qín","快":"kuài","乐":"lè","安":"ān","静":"jìng","孩":"hái","子":"zi"};
+
+// Toned pinyin to no-tone and num-tone
+const TONES = {
+  'ā':'a1','á':'a2','ǎ':'a3','à':'a4','ē':'e1','é':'e2','ě':'e3','è':'e4',
+  'ī':'i1','í':'i2','ǐ':'i3','ì':'i4','ō':'o1','ó':'o2','ǒ':'o3','ò':'o4',
+  'ū':'u1','ú':'u2','ǔ':'u3','ù':'u4','ǖ':'v1','ǘ':'v2','ǚ':'v3','ǜ':'v4',
+  'ü':'v','Ā':'A1','Á':'A2','Ǎ':'A3','À':'A4'
+};
+const NOTONE_MAP = {'ā':'a','á':'a','ǎ':'a','à':'a','ē':'e','é':'e','ě':'e','è':'e','ī':'i','í':'i','ǐ':'i','ì':'i','ō':'o','ó':'o','ǒ':'o','ò':'o','ū':'u','ú':'u','ǔ':'u','ù':'u','ǖ':'ü','ǘ':'ü','ǚ':'ü','ǜ':'ü','ü':'ü'};
+
+let toneMode = 'tone';
+let fmtMode = 'space';
+
+function setTone(m) {
+  toneMode = m;
+  ['tone','notone','num'].forEach(t => document.getElementById('opt-tone'+(t==='tone'?1:t==='notone'?2:3)).classList.toggle('active',t===m));
+}
+function setFmt(m) {
+  fmtMode = m;
+  ['space','above','inline','first'].forEach((t,i) => document.getElementById(['fmt-space','fmt-above','fmt-inline','fmt-first'][i]).classList.toggle('active',t===m));
+}
+
+function convTone(pinyin) {
+  if (toneMode==='tone') return pinyin;
+  if (toneMode==='notone') return pinyin.split('').map(c=>NOTONE_MAP[c]||c).join('');
+  if (toneMode==='num') {
+    let tone = 0;
+    const base = pinyin.split('').map(c=>{ const t=TONES[c]; if(t&&/\d/.test(t.slice(-1))){ tone=t.slice(-1); return t.slice(0,-1); } return NOTONE_MAP[c]||c; }).join('');
+    return base + (tone||'');
+  }
+  return pinyin;
+}
+
+function getCharPinyin(char) {
+  return PINYIN_MAP[char] || null;
+}
+
+function convertPinyin() {
+  const text = document.getElementById('input-text').value;
+  if (!text.trim()) { alert('请输入汉字'); return; }
+
+  const chars = text.split('');
+  const pairs = chars.map(c => {
+    const py = getCharPinyin(c);
+    return { char:c, pinyin: py ? convTone(py) : null };
+  });
+
+  // Display result
+  let displayHTML = '';
+  let textResult = '';
+
+  if (fmtMode === 'above') {
+    displayHTML = '<div style="line-height:2.8;">';
+    pairs.forEach(p => {
+      if (p.pinyin) {
+        displayHTML += `<span class="py-block"><span class="py-reading">${p.pinyin}</span><br><span class="py-char">${p.char}</span></span>`;
+        textResult += p.pinyin + ' ';
+      } else if (p.char === '\n') {
+        displayHTML += '<br>';
+        textResult += '\n';
+      } else {
+        displayHTML += `<span class="py-block"><span class="py-reading" style="color:transparent">-</span><br><span class="py-char">${p.char}</span></span>`;
+        textResult += p.char;
+      }
+    });
+    displayHTML += '</div>';
+  } else if (fmtMode === 'inline') {
+    pairs.forEach(p => {
+      if (p.pinyin) { textResult += `${p.char}(${p.pinyin})`; }
+      else { textResult += p.char; }
+    });
+    displayHTML = `<div style="font-size:.95rem;line-height:2;color:var(--ink);">${textResult.replace(/\n/g,'<br>')}</div>`;
+  } else if (fmtMode === 'first') {
+    pairs.forEach(p => {
+      if (p.pinyin) { textResult += p.pinyin[0].toUpperCase(); }
+      else if (p.char === '\n') { textResult += '\n'; }
+      else { textResult += p.char; }
+    });
+    displayHTML = `<div style="font-size:1rem;line-height:2;color:var(--accent);font-weight:700;letter-spacing:2px;">${textResult}</div>`;
+  } else { // space
+    pairs.forEach(p => {
+      if (p.pinyin) { textResult += p.pinyin + ' '; }
+      else if (p.char === '\n') { textResult = textResult.trim() + '\n'; }
+      else { textResult += p.char; }
+    });
+    displayHTML = `<div style="font-size:.95rem;line-height:2;color:var(--accent);">${textResult.replace(/\n/g,'<br>')}</div>`;
+  }
+
+  document.getElementById('display-result').innerHTML = displayHTML;
+  document.getElementById('text-result').value = textResult.trim();
+  document.getElementById('result-area').style.display='block';
+  saveHistory(text.slice(0,30));
+}
+
+function copyResult() {
+  navigator.clipboard.writeText(document.getElementById('text-result').value).then(()=>alert('✅ 已复制'));
+}
+function clearAll() {
+  document.getElementById('input-text').value='';
+  document.getElementById('result-area').style.display='none';
+}
+function saveHistory(preview) {
+  let h = JSON.parse(localStorage.getItem('pinyin_history')||'[]');
+  h.unshift({preview, date:new Date().toLocaleDateString('zh-CN')});
+  if(h.length>5) h=h.slice(0,5);
+  localStorage.setItem('pinyin_history', JSON.stringify(h));
+}
+
+// Render initials reference
+document.querySelector('.options-row').insertAdjacentHTML('afterend','');
+// Fix the template literal in HTML
+document.querySelectorAll('.card-title')[1].parentElement.querySelector('div:last-child div').innerHTML = 
+  'b p m f d t n l g k h j q x zh ch sh r z c s y w'.split(' ').map(s=>`<span style="display:inline-block;background:var(--bg);border-radius:6px;padding:4px 10px;font-size:.88rem;color:var(--accent);font-weight:700;">${s}</span>`).join('');
+</script>
+</body>
+</html>

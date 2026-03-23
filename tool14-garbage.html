@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>垃圾分类查询</title>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f0fdf4;--card:#fff;--ink:#052e16;--muted:#6b7280;--accent:#16a34a;--border:#bbf7d0;--red:#dc2626;--blue:#2563eb;--yellow:#d97706;--gray:#6b7280;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+.topbar{background:#052e16;color:#fff;padding:0 20px;height:56px;display:flex;align-items:center;gap:16px;}
+.topbar a{color:#86efac;text-decoration:none;font-size:.85rem;}.topbar a:hover{color:#fff;}
+.topbar-title{font-family:'ZCOOL XiaoWei',serif;font-size:1.1rem;}
+.container{max-width:780px;margin:0 auto;padding:24px 16px 60px;}
+.page-title{text-align:center;padding:24px 0 20px;}
+.page-title h1{font-family:'ZCOOL XiaoWei',serif;font-size:2rem;letter-spacing:2px;}
+.page-title h1 span{color:var(--accent);}
+.page-title p{color:var(--muted);font-size:.9rem;margin-top:6px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px;margin-bottom:18px;}
+.card-title{font-size:.95rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.ad-bar{background:#f0fdf4;border:1px dashed #86efac;border-radius:10px;padding:12px;text-align:center;color:#15803d;font-size:.8rem;margin-bottom:16px;}
+
+/* SEARCH */
+.search-wrap{position:relative;margin-bottom:14px;}
+.search-wrap input{width:100%;padding:15px 18px 15px 50px;border:2px solid var(--border);border-radius:14px;font-size:1.05rem;font-family:'Noto Sans SC',sans-serif;outline:none;background:#fff;}
+.search-wrap input:focus{border-color:var(--accent);}
+.search-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:1.2rem;}
+.search-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:9px;cursor:pointer;font-family:'Noto Sans SC',sans-serif;font-size:.85rem;}
+
+/* RESULT */
+.result-card{display:none;margin-bottom:18px;border-radius:20px;padding:24px;border:2px solid;}
+.result-card.show{display:block;animation:fadeUp .3s ease;}
+.result-icon{font-size:3rem;margin-bottom:10px;}
+.result-type{font-family:'ZCOOL XiaoWei',serif;font-size:1.8rem;font-weight:700;margin-bottom:6px;}
+.result-item-name{font-size:1rem;color:var(--muted);margin-bottom:12px;}
+.result-tips{font-size:.85rem;line-height:1.8;background:rgba(255,255,255,.5);padding:12px;border-radius:10px;}
+
+/* TYPE COLORS */
+.type-recyclable{background:linear-gradient(135deg,#dbeafe,#eff6ff);border-color:#93c5fd;color:#1e40af;}
+.type-food{background:linear-gradient(135deg,#dcfce7,#f0fdf4);border-color:#86efac;color:#15803d;}
+.type-harmful{background:linear-gradient(135deg,#fee2e2,#fef2f2);border-color:#fca5a5;color:#dc2626;}
+.type-other{background:linear-gradient(135deg,#f3f4f6,#f9fafb);border-color:#d1d5db;color:#374151;}
+
+/* QUICK CATS */
+.cats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+.cat-card{border-radius:14px;padding:18px;cursor:pointer;transition:all .2s;border:2px solid transparent;}
+.cat-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.08);}
+.cat-recyclable{background:linear-gradient(135deg,#dbeafe,#eff6ff);}
+.cat-food{background:linear-gradient(135deg,#dcfce7,#f0fdf4);}
+.cat-harmful{background:linear-gradient(135deg,#fee2e2,#fef2f2);}
+.cat-other{background:linear-gradient(135deg,#f3f4f6,#f9fafb);}
+.cat-icon{font-size:2rem;margin-bottom:8px;}
+.cat-name{font-size:1rem;font-weight:700;margin-bottom:4px;}
+.cat-examples{font-size:.78rem;color:var(--muted);line-height:1.6;}
+.cat-tag{display:inline-block;font-size:.7rem;padding:2px 8px;border-radius:10px;margin-top:5px;font-weight:700;}
+.tag-blue{background:#dbeafe;color:#1d4ed8;}
+.tag-green{background:#dcfce7;color:#15803d;}
+.tag-red{background:#fee2e2;color:#dc2626;}
+.tag-gray{background:#f3f4f6;color:#374151;}
+
+/* NOT FOUND */
+.not-found{text-align:center;padding:20px;color:var(--muted);font-size:.9rem;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="index.html">← 返回首页</a><span style="color:#555">/</span>
+  <span class="topbar-title">♻️ 垃圾分类查询</span>
+</div>
+<div class="container">
+  <div class="page-title">
+    <h1>垃圾<span>分类</span>查询</h1>
+    <p>输入物品名称 · 秒查垃圾类别 · 简单清晰 · 老幼皆宜</p>
+  </div>
+  <div class="ad-bar">📢 广告位 · 环保/社区生活类合作欢迎联系</div>
+
+  <div class="card">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="search-input" placeholder="搜索垃圾类别，例：矿泉水瓶、剩饭、废电池..." oninput="doSearch()" onkeydown="if(event.key==='Enter')doSearch()">
+      <button class="search-btn" onclick="doSearch()">查询</button>
+    </div>
+    <div id="result-area"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 四大垃圾类别</div>
+    <div class="cats-grid">
+      <div class="cat-card cat-recyclable" onclick="showCategory('recyclable')">
+        <div class="cat-icon">♻️</div>
+        <div class="cat-name">可回收物</div>
+        <div class="cat-examples">纸张、金属、塑料、玻璃、织物等可循环利用废品</div>
+        <div class="cat-tag tag-blue">蓝色垃圾桶</div>
+      </div>
+      <div class="cat-card cat-food" onclick="showCategory('food')">
+        <div class="cat-icon">🍚</div>
+        <div class="cat-name">厨余垃圾</div>
+        <div class="cat-examples">剩饭剩菜、蔬果皮、食物残渣等有机废物</div>
+        <div class="cat-tag tag-green">绿色垃圾桶</div>
+      </div>
+      <div class="cat-card cat-harmful" onclick="showCategory('harmful')">
+        <div class="cat-icon">☣️</div>
+        <div class="cat-name">有害垃圾</div>
+        <div class="cat-examples">废电池、荧光灯管、药品、油漆等有毒有害废物</div>
+        <div class="cat-tag tag-red">红色垃圾桶</div>
+      </div>
+      <div class="cat-card cat-other" onclick="showCategory('other')">
+        <div class="cat-icon">🗑️</div>
+        <div class="cat-name">其他垃圾</div>
+        <div class="cat-examples">餐巾纸、污染塑料袋、陶瓷碎片等无法回收废物</div>
+        <div class="cat-tag tag-gray">灰色垃圾桶</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ad-bar">🌱 垃圾分类从我做起 · 绿色生活社区合作</div>
+</div>
+<script>
+const DB = [
+  // 可回收物
+  {name:'矿泉水瓶',type:'recyclable',alias:['水瓶','塑料瓶','饮料瓶','PET瓶']},
+  {name:'废纸箱',type:'recyclable',alias:['纸板','快递箱','包装纸','报纸','纸盒']},
+  {name:'易拉罐',type:'recyclable',alias:['铝罐','啤酒罐','汽水罐']},
+  {name:'旧衣服',type:'recyclable',alias:['旧衣物','废布料','旧鞋子','旧包包','织物']},
+  {name:'玻璃瓶',type:'recyclable',alias:['酒瓶','玻璃杯','玻璃容器']},
+  {name:'金属罐头',type:'recyclable',alias:['铁罐','金属容器','金属盒']},
+  {name:'废书本',type:'recyclable',alias:['书籍','杂志','废报纸','废纸']},
+  {name:'电子设备',type:'recyclable',alias:['手机','电脑','平板','家电','电视']},
+  {name:'硬纸板',type:'recyclable',alias:['瓦楞纸','纸板箱']},
+  {name:'铜铁铝',type:'recyclable',alias:['废金属','铁丝','铁锅','铜线']},
+  {name:'塑料制品',type:'recyclable',alias:['塑料桶','塑料盆','塑料管','硬塑料']},
+  // 厨余垃圾
+  {name:'剩饭剩菜',type:'food',alias:['剩菜','饭菜','食物残渣','米饭','炒菜']},
+  {name:'蔬菜根叶',type:'food',alias:['菜叶','蔬菜','菜帮','蔬菜废料']},
+  {name:'水果皮核',type:'food',alias:['果皮','果核','香蕉皮','苹果核','西瓜皮']},
+  {name:'茶叶渣',type:'food',alias:['茶叶','茶包','咖啡渣']},
+  {name:'鱼骨肉骨',type:'food',alias:['骨头','鱼刺','鸡骨头','猪骨']},
+  {name:'蛋壳',type:'food',alias:['鸡蛋壳','鸭蛋壳']},
+  {name:'过期食品',type:'food',alias:['变质食物','坏掉的食物','过期食物']},
+  {name:'豆腐渣',type:'food',alias:['豆渣','食物废料']},
+  {name:'花草树木',type:'food',alias:['枯叶','植物枝叶','花朵','草']},
+  // 有害垃圾
+  {name:'废电池',type:'harmful',alias:['电池','干电池','充电电池','锂电池','纽扣电池']},
+  {name:'荧光灯管',type:'harmful',alias:['日光灯','节能灯','灯管','荧光灯']},
+  {name:'过期药品',type:'harmful',alias:['药品','药片','药水','过期药']},
+  {name:'油漆涂料',type:'harmful',alias:['油漆','涂料','染料','化学溶剂']},
+  {name:'废墨盒',type:'harmful',alias:['打印机墨盒','硒鼓','墨水']},
+  {name:'杀虫剂',type:'harmful',alias:['农药','灭蚊水','杀虫水','除草剂']},
+  {name:'温度计',type:'harmful',alias:['体温计','水银温度计']},
+  {name:'清洁剂',type:'harmful',alias:['洁厕灵','消毒液','强力清洁剂']},
+  {name:'废胶片',type:'harmful',alias:['照相底片','X光片']},
+  // 其他垃圾
+  {name:'餐巾纸',type:'other',alias:['纸巾','面巾纸','卫生纸','湿纸巾']},
+  {name:'烟蒂',type:'other',alias:['烟头','香烟']},
+  {name:'一次性筷子',type:'other',alias:['木筷','一次性餐具']},
+  {name:'污染塑料袋',type:'other',alias:['脏塑料袋','食品袋','保鲜袋']},
+  {name:'陶瓷碎片',type:'other',alias:['陶瓷','瓷器','碎碗','破碗']},
+  {name:'大骨头',type:'other',alias:['大棒骨','大猪骨']},
+  {name:'灰土',type:'other',alias:['扫地灰尘','沙土','泥土']},
+  {name:'橡皮泥',type:'other',alias:['橡皮','黏土']},
+  {name:'毛发',type:'other',alias:['头发','动物毛']},
+  {name:'口罩',type:'other',alias:['废口罩','医用口罩']},
+];
+
+const TYPE_INFO = {
+  recyclable:{label:'可回收物',icon:'♻️',class:'type-recyclable',tips:'请清空残留物后投放蓝色可回收物垃圾桶。纸类保持干燥，玻璃类防止破碎，金属类可压扁节省空间。'},
+  food:{label:'厨余垃圾',icon:'🍚',class:'type-food',tips:'请滤干水分后投放绿色厨余垃圾桶。不要混入牙签、餐巾纸等非食物废弃物，有助于堆肥处理。'},
+  harmful:{label:'有害垃圾',icon:'☣️',class:'type-harmful',tips:'请完整投放红色有害垃圾桶，不可破损。特殊情况可送至专设的危险废物回收点，避免随意丢弃污染环境。'},
+  other:{label:'其他垃圾',icon:'🗑️',class:'type-other',tips:'投放灰色其他垃圾桶。如有大件物品，请联系当地环卫部门进行单独收集处理。'},
+};
+
+const CAT_ITEMS = {
+  recyclable:['矿泉水瓶','废纸箱','易拉罐','旧衣服','玻璃瓶','废书本','电子设备','金属罐头','铜铁铝','塑料制品'],
+  food:['剩饭剩菜','蔬菜根叶','水果皮核','茶叶渣','鱼骨肉骨','蛋壳','过期食品','花草树木'],
+  harmful:['废电池','荧光灯管','过期药品','油漆涂料','杀虫剂','温度计','废墨盒','废胶片'],
+  other:['餐巾纸','烟蒂','一次性筷子','污染塑料袋','陶瓷碎片','灰土','口罩','毛发'],
+};
+
+function doSearch() {
+  const q = document.getElementById('search-input').value.trim();
+  if (!q) { document.getElementById('result-area').innerHTML=''; return; }
+
+  const match = DB.find(item =>
+    item.name.includes(q) || q.includes(item.name) ||
+    item.alias.some(a => a.includes(q) || q.includes(a))
+  );
+
+  if (match) {
+    showResult(match.name, match.type);
+  } else {
+    document.getElementById('result-area').innerHTML = `<div class="not-found">😅 暂未收录"${q}"，请尝试其他关键词<br><span style="font-size:.78rem;">例如：水瓶、剩菜、电池、纸巾...</span></div>`;
+  }
+}
+
+function showResult(name, type) {
+  const info = TYPE_INFO[type];
+  document.getElementById('result-area').innerHTML = `
+    <div class="result-card ${info.class} show">
+      <div class="result-icon">${info.icon}</div>
+      <div class="result-type">${info.label}</div>
+      <div class="result-item-name">「${name}」属于${info.label}</div>
+      <div class="result-tips">💡 投放提示：${info.tips}</div>
+    </div>`;
+}
+
+function showCategory(type) {
+  const info = TYPE_INFO[type];
+  const items = CAT_ITEMS[type];
+  document.getElementById('search-input').value = '';
+  document.getElementById('result-area').innerHTML = `
+    <div class="result-card ${info.class} show">
+      <div class="result-icon">${info.icon}</div>
+      <div class="result-type">${info.label}</div>
+      <div style="font-size:.85rem;margin-bottom:10px;color:var(--muted);">常见物品：</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+        ${items.map(i=>`<span style="padding:4px 10px;background:rgba(255,255,255,.6);border-radius:20px;font-size:.82rem;cursor:pointer;" onclick="showResult('${i}','${type}')">${i}</span>`).join('')}
+      </div>
+      <div class="result-tips">💡 投放提示：${info.tips}</div>
+    </div>`;
+}
+</script>
+</body>
+</html>

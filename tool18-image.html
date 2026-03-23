@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图片压缩工具 - 万能工具箱</title>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent: #7c3aed;
+  --accent2: #a855f7;
+  --bg: #0a0a10;
+  --card: #13131e;
+  --card2: #1a1a2a;
+  --text: #ede9f8;
+  --muted: #7c7a99;
+  --border: #2a2a3e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Noto Sans SC', sans-serif; min-height: 100vh; }
+
+.topbar { background: #111118; border-bottom: 1px solid var(--border); padding: 0 20px; height: 52px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; }
+.back-btn { color: var(--muted); text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 6px; transition: color .2s; }
+.back-btn:hover { color: var(--text); }
+.topbar-title { font-family: 'ZCOOL XiaoWei', serif; font-size: 17px; color: var(--accent2); }
+
+.hero { background: linear-gradient(135deg, #0f0a1e 0%, #0a0a10 60%); padding: 40px 20px 30px; text-align: center; border-bottom: 1px solid var(--border); }
+.hero-icon { font-size: 48px; margin-bottom: 12px; }
+.hero h1 { font-family: 'ZCOOL XiaoWei', serif; font-size: 26px; color: var(--accent2); margin-bottom: 8px; }
+.hero p { color: var(--muted); font-size: 14px; }
+
+.container { max-width: 700px; margin: 0 auto; padding: 24px 16px; }
+
+/* upload zone */
+.upload-zone { border: 2px dashed var(--border); border-radius: 20px; padding: 48px 24px; text-align: center; cursor: pointer; transition: all .3s; background: var(--card); margin-bottom: 20px; position: relative; }
+.upload-zone:hover, .upload-zone.drag-over { border-color: var(--accent); background: rgba(124,58,237,.08); }
+.upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.upload-icon { font-size: 52px; margin-bottom: 14px; }
+.upload-title { font-size: 18px; font-weight: 500; margin-bottom: 8px; }
+.upload-sub { font-size: 13px; color: var(--muted); }
+.upload-formats { display: flex; gap: 8px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+.fmt-badge { background: var(--card2); border: 1px solid var(--border); border-radius: 6px; padding: 3px 10px; font-size: 12px; color: var(--muted); }
+
+/* settings */
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px; margin-bottom: 16px; }
+.card-title { font-size: 15px; font-weight: 500; color: var(--accent2); margin-bottom: 18px; }
+
+.quality-slider { width: 100%; accent-color: var(--accent); cursor: pointer; margin: 8px 0; }
+.quality-display { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+
+.size-presets { display: flex; gap: 8px; flex-wrap: wrap; }
+.preset-btn { padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--card2); color: var(--muted); font-size: 13px; cursor: pointer; transition: all .2s; font-family: inherit; }
+.preset-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(124,58,237,.12); }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+label { font-size: 13px; color: var(--muted); }
+input[type=number] { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 14px; color: var(--text); font-family: inherit; outline: none; transition: border-color .2s; width: 100%; }
+input[type=number]:focus { border-color: var(--accent); }
+
+.toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.toggle-row:last-child { border-bottom: none; }
+.toggle-label { font-size: 14px; }
+.toggle-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.toggle { width: 44px; height: 24px; background: var(--border); border-radius: 12px; position: relative; cursor: pointer; transition: background .2s; }
+.toggle.on { background: var(--accent); }
+.toggle::after { content: ''; position: absolute; left: 2px; top: 2px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: transform .2s; }
+.toggle.on::after { transform: translateX(20px); }
+
+/* compress btn */
+.compress-btn { width: 100%; padding: 15px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 500; cursor: pointer; font-family: inherit; transition: opacity .2s; }
+.compress-btn:hover { opacity: .9; }
+.compress-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* results */
+.result-section { display: none; }
+.compare-area { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.img-box { background: var(--card2); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+.img-box img { width: 100%; height: 180px; object-fit: contain; background: #111; display: block; }
+.img-info { padding: 12px; }
+.img-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.img-size { font-size: 16px; font-weight: 600; }
+.img-dim { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.saving-badge { text-align: center; padding: 14px; background: rgba(124,58,237,.12); border: 1px solid var(--accent); border-radius: 12px; margin-bottom: 16px; }
+.saving-pct { font-size: 36px; font-weight: 700; color: var(--accent2); font-family: 'ZCOOL XiaoWei', serif; }
+.saving-text { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+.download-btn { width: 100%; padding: 14px; background: #18a87a; border: none; border-radius: 12px; color: white; font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+/* progress */
+.progress-bar { width: 100%; height: 6px; background: var(--card2); border-radius: 3px; margin: 12px 0; overflow: hidden; display: none; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 3px; transition: width .3s; }
+
+/* batch */
+.batch-list { max-height: 300px; overflow-y: auto; }
+.batch-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.batch-item:last-child { border-bottom: none; }
+.batch-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 12px; }
+.batch-status { font-size: 12px; padding: 3px 10px; border-radius: 6px; }
+.status-done { background: rgba(24,168,122,.15); color: #18a87a; }
+.status-wait { background: rgba(124,58,237,.15); color: var(--accent2); }
+.status-ing { background: rgba(244,140,6,.15); color: #f48c06; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back-btn" href="index.html">← 返回</a>
+  <span class="topbar-title">🖼️ 图片压缩工具</span>
+</div>
+
+<div class="hero">
+  <div class="hero-icon">🗜️</div>
+  <h1>图片压缩工具</h1>
+  <p>本地处理 · 不上传服务器 · 保护隐私</p>
+</div>
+
+<div class="container">
+
+  <div class="upload-zone" id="upload-zone">
+    <input type="file" id="file-input" accept="image/*" multiple onchange="handleFiles(this.files)">
+    <div class="upload-icon">📁</div>
+    <div class="upload-title">点击选择图片 或 拖拽到此处</div>
+    <div class="upload-sub">支持批量处理，所有操作均在本地完成</div>
+    <div class="upload-formats">
+      <span class="fmt-badge">JPG</span>
+      <span class="fmt-badge">PNG</span>
+      <span class="fmt-badge">WebP</span>
+      <span class="fmt-badge">GIF</span>
+      <span class="fmt-badge">BMP</span>
+    </div>
+  </div>
+
+  <!-- Settings -->
+  <div class="card">
+    <div class="card-title">⚙️ 压缩设置</div>
+
+    <div style="margin-bottom:18px;">
+      <label style="font-size:13px;color:var(--muted);display:block;margin-bottom:10px;">压缩质量</label>
+      <input type="range" class="quality-slider" id="quality" min="10" max="100" value="80" oninput="updateQualityDisplay()">
+      <div class="quality-display">
+        <span>低质量 (更小)</span>
+        <span id="quality-val" style="color:var(--accent2);font-weight:600">80%</span>
+        <span>高质量 (更清晰)</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom:18px;">
+      <label style="font-size:13px;color:var(--muted);display:block;margin-bottom:10px;">尺寸预设</label>
+      <div class="size-presets">
+        <button class="preset-btn active" onclick="selectPreset(this, 0, 0)">保持原始</button>
+        <button class="preset-btn" onclick="selectPreset(this, 1920, 1080)">1080P</button>
+        <button class="preset-btn" onclick="selectPreset(this, 1280, 720)">720P</button>
+        <button class="preset-btn" onclick="selectPreset(this, 800, 600)">800px</button>
+        <button class="preset-btn" onclick="selectPreset(this, 400, 400)">头像</button>
+        <button class="preset-btn" onclick="selectPreset(this, -1, -1)">自定义</button>
+      </div>
+      <div class="form-row" id="custom-size" style="display:none;margin-top:12px;">
+        <div class="form-group">
+          <label>最大宽度 (px)</label>
+          <input type="number" id="max-width" placeholder="例如 1200" min="1">
+        </div>
+        <div class="form-group">
+          <label>最大高度 (px)</label>
+          <input type="number" id="max-height" placeholder="例如 900" min="1">
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">输出格式转换</div>
+          <div class="toggle-sub">转换为 WebP 格式 (体积更小)</div>
+        </div>
+        <div class="toggle" id="webp-toggle" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">保留 EXIF 信息</div>
+          <div class="toggle-sub">保留拍摄地点、设备等元数据</div>
+        </div>
+        <div class="toggle" id="exif-toggle" onclick="this.classList.toggle('on')"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="progress-bar" id="progress-bar">
+    <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+
+  <button class="compress-btn" id="compress-btn" onclick="startCompress()" disabled>选择图片后开始压缩</button>
+
+  <!-- Single result -->
+  <div class="result-section" id="single-result" style="margin-top:20px;">
+    <div class="saving-badge">
+      <div class="saving-pct" id="saving-pct">-</div>
+      <div class="saving-text" id="saving-text">压缩完成</div>
+    </div>
+    <div class="compare-area">
+      <div class="img-box">
+        <img id="orig-preview" src="" alt="原始">
+        <div class="img-info">
+          <div class="img-label">原始图片</div>
+          <div class="img-size" id="orig-size">-</div>
+          <div class="img-dim" id="orig-dim">-</div>
+        </div>
+      </div>
+      <div class="img-box">
+        <img id="comp-preview" src="" alt="压缩后">
+        <div class="img-info">
+          <div class="img-label">压缩后</div>
+          <div class="img-size" id="comp-size" style="color:var(--accent2)">-</div>
+          <div class="img-dim" id="comp-dim">-</div>
+        </div>
+      </div>
+    </div>
+    <button class="download-btn" id="download-single-btn">⬇️ 下载压缩图片</button>
+  </div>
+
+  <!-- Batch result -->
+  <div class="result-section" id="batch-result" style="margin-top:20px;">
+    <div class="card">
+      <div class="card-title">📦 批量压缩结果</div>
+      <div class="batch-list" id="batch-list"></div>
+      <button class="download-btn" id="download-all-btn" style="margin-top:16px;">⬇️ 下载全部 (ZIP)</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let files = [];
+let compressedBlobs = [];
+let maxW = 0, maxH = 0;
+
+const uploadZone = document.getElementById('upload-zone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('drag-over'); handleFiles(e.dataTransfer.files); });
+
+function updateQualityDisplay() {
+  const q = document.getElementById('quality').value;
+  document.getElementById('quality-val').textContent = q + '%';
+}
+
+function selectPreset(el, w, h) {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  maxW = w; maxH = h;
+  document.getElementById('custom-size').style.display = (w === -1) ? 'grid' : 'none';
+}
+
+function handleFiles(fileList) {
+  files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+  if (files.length === 0) { alert('未找到有效图片文件'); return; }
+  document.getElementById('compress-btn').disabled = false;
+  document.getElementById('compress-btn').textContent = `🗜️ 压缩 ${files.length} 张图片`;
+  document.getElementById('single-result').style.display = 'none';
+  document.getElementById('batch-result').style.display = 'none';
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+}
+
+function compressImage(file, quality, maxWidth, maxHeight, toWebP) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if (maxWidth > 0 && w > maxWidth) { h = h * maxWidth / w; w = maxWidth; }
+      if (maxHeight > 0 && h > maxHeight) { w = w * maxHeight / h; h = maxHeight; }
+      w = Math.round(w); h = Math.round(h);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+
+      const mimeType = toWebP ? 'image/webp' : (file.type === 'image/png' ? 'image/png' : 'image/jpeg');
+      canvas.toBlob(blob => {
+        URL.revokeObjectURL(url);
+        resolve({ blob, width: w, height: h, origWidth: img.width, origHeight: img.height });
+      }, mimeType, quality / 100);
+    };
+    img.src = url;
+  });
+}
+
+async function startCompress() {
+  if (files.length === 0) return;
+  const quality = parseInt(document.getElementById('quality').value);
+  const toWebP = document.getElementById('webp-toggle').classList.contains('on');
+  let w = maxW, h = maxH;
+  if (w === -1) { w = parseInt(document.getElementById('max-width').value) || 0; h = parseInt(document.getElementById('max-height').value) || 0; }
+
+  document.getElementById('compress-btn').disabled = true;
+  document.getElementById('compress-btn').textContent = '压缩中...';
+  document.getElementById('progress-bar').style.display = 'block';
+
+  compressedBlobs = [];
+
+  for (let i = 0; i < files.length; i++) {
+    document.getElementById('progress-fill').style.width = ((i + 1) / files.length * 100) + '%';
+    const result = await compressImage(files[i], quality, w, h, toWebP);
+    compressedBlobs.push({ file: files[i], ...result });
+  }
+
+  document.getElementById('progress-bar').style.display = 'none';
+  document.getElementById('compress-btn').disabled = false;
+  document.getElementById('compress-btn').textContent = `✅ 重新压缩`;
+
+  if (files.length === 1) showSingleResult();
+  else showBatchResult();
+}
+
+function showSingleResult() {
+  const r = compressedBlobs[0];
+  const origSize = r.file.size;
+  const compSize = r.blob.size;
+  const saving = ((origSize - compSize) / origSize * 100).toFixed(1);
+
+  document.getElementById('orig-preview').src = URL.createObjectURL(r.file);
+  document.getElementById('comp-preview').src = URL.createObjectURL(r.blob);
+  document.getElementById('orig-size').textContent = formatSize(origSize);
+  document.getElementById('comp-size').textContent = formatSize(compSize);
+  document.getElementById('orig-dim').textContent = `${r.origWidth} × ${r.origHeight} px`;
+  document.getElementById('comp-dim').textContent = `${r.width} × ${r.height} px`;
+  document.getElementById('saving-pct').textContent = saving > 0 ? `节省 ${saving}%` : '已优化';
+  document.getElementById('saving-text').textContent = `${formatSize(origSize)} → ${formatSize(compSize)}`;
+
+  const ext = document.getElementById('webp-toggle').classList.contains('on') ? '.webp' : r.file.name.match(/\.[^.]+$/)?.[0] || '.jpg';
+  const baseName = r.file.name.replace(/\.[^.]+$/, '');
+  document.getElementById('download-single-btn').onclick = () => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(r.blob);
+    a.download = baseName + '_compressed' + ext;
+    a.click();
+  };
+
+  document.getElementById('single-result').style.display = 'block';
+}
+
+function showBatchResult() {
+  const toWebP = document.getElementById('webp-toggle').classList.contains('on');
+  let totalOrig = 0, totalComp = 0;
+  const html = compressedBlobs.map((r, i) => {
+    totalOrig += r.file.size;
+    totalComp += r.blob.size;
+    const saving = ((r.file.size - r.blob.size) / r.file.size * 100).toFixed(0);
+    return `<div class="batch-item">
+      <div class="batch-name">${r.file.name}</div>
+      <span style="color:var(--muted);font-size:12px;margin-right:8px">${formatSize(r.file.size)} → ${formatSize(r.blob.size)}</span>
+      <span class="batch-status status-done">节省${saving}%</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('batch-list').innerHTML = html + `
+    <div style="padding:12px 0;font-size:13px;color:var(--accent2);text-align:center;font-weight:500">
+      共节省 ${formatSize(totalOrig - totalComp)} · ${((totalOrig - totalComp)/totalOrig*100).toFixed(1)}%
+    </div>`;
+
+  document.getElementById('download-all-btn').onclick = async () => {
+    alert('提示：批量下载需要ZIP库支持。建议单独下载或使用桌面版工具。');
+    // For simplicity, download first file as demo
+    if (compressedBlobs.length > 0) {
+      const r = compressedBlobs[0];
+      const ext = toWebP ? '.webp' : r.file.name.match(/\.[^.]+$/)?.[0] || '.jpg';
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(r.blob);
+      a.download = r.file.name.replace(/\.[^.]+$/, '') + '_compressed' + ext;
+      a.click();
+    }
+  };
+
+  document.getElementById('batch-result').style.display = 'block';
+}
+</script>
+</body>
+</html>

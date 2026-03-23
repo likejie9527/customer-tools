@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>汽车油耗计算器 - 万能工具箱</title>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent: #e85d04;
+  --accent2: #f48c06;
+  --bg: #0d0d0d;
+  --card: #161616;
+  --card2: #1e1e1e;
+  --text: #f0ece3;
+  --muted: #888;
+  --border: #2a2a2a;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Noto Sans SC', sans-serif; min-height: 100vh; }
+
+/* topbar */
+.topbar { background: #111; border-bottom: 1px solid var(--border); padding: 0 20px; height: 52px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; }
+.back-btn { color: var(--muted); text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 6px; transition: color .2s; }
+.back-btn:hover { color: var(--text); }
+.topbar-title { font-family: 'ZCOOL XiaoWei', serif; font-size: 17px; color: var(--accent); }
+
+/* hero */
+.hero { background: linear-gradient(135deg, #1a0a00 0%, #0d0d0d 60%); padding: 40px 20px 30px; text-align: center; border-bottom: 1px solid var(--border); }
+.hero-icon { font-size: 48px; margin-bottom: 12px; }
+.hero h1 { font-family: 'ZCOOL XiaoWei', serif; font-size: 26px; color: var(--accent); margin-bottom: 8px; }
+.hero p { color: var(--muted); font-size: 14px; }
+
+.container { max-width: 680px; margin: 0 auto; padding: 24px 16px; }
+
+/* tabs */
+.tabs { display: flex; gap: 0; background: var(--card); border-radius: 12px; padding: 4px; margin-bottom: 24px; border: 1px solid var(--border); }
+.tab { flex: 1; padding: 10px; text-align: center; font-size: 14px; cursor: pointer; border-radius: 9px; transition: all .2s; color: var(--muted); }
+.tab.active { background: var(--accent); color: white; font-weight: 500; }
+
+/* card */
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+.card-title { font-size: 15px; font-weight: 500; color: var(--accent2); margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+
+/* form */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group.full { grid-column: 1/-1; }
+label { font-size: 13px; color: var(--muted); }
+input, select { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; font-size: 15px; color: var(--text); font-family: inherit; outline: none; transition: border-color .2s; width: 100%; }
+input:focus, select:focus { border-color: var(--accent); }
+.unit { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* fuel type selector */
+.fuel-types { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.fuel-btn { padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border); background: var(--card2); color: var(--muted); font-size: 13px; cursor: pointer; transition: all .2s; }
+.fuel-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(232,93,4,.1); }
+
+/* calc btn */
+.calc-btn { width: 100%; padding: 15px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 500; cursor: pointer; font-family: inherit; transition: opacity .2s; margin-top: 8px; }
+.calc-btn:hover { opacity: .9; }
+
+/* results */
+.result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.result-box { background: var(--card2); border-radius: 12px; padding: 16px; text-align: center; border: 1px solid var(--border); }
+.result-box.highlight { border-color: var(--accent); background: rgba(232,93,4,.08); }
+.result-val { font-size: 26px; font-weight: 700; color: var(--accent); font-family: 'ZCOOL XiaoWei', serif; }
+.result-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* fuel price table */
+.price-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.price-table th { color: var(--muted); font-weight: 400; padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+.price-table td { padding: 10px; border-bottom: 1px solid var(--border); }
+.price-table tr:last-child td { border-bottom: none; }
+.price-table tr.active-row td { color: var(--accent2); font-weight: 500; }
+
+/* comparison bar */
+.compare-bar { margin: 10px 0; }
+.compare-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.compare-label { font-size: 13px; width: 70px; color: var(--muted); }
+.bar-wrap { flex: 1; background: var(--card2); border-radius: 4px; height: 10px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; transition: width .6s ease; }
+.compare-val { font-size: 13px; width: 60px; text-align: right; }
+
+/* history */
+.history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.history-item:last-child { border-bottom: none; }
+.history-main { color: var(--text); }
+.history-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.history-val { color: var(--accent); font-weight: 600; font-size: 15px; }
+
+/* ad */
+.ad-bar { background: linear-gradient(135deg, #1a1a00, #0d0d0d); border: 1px solid #333; border-radius: 12px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.ad-text h4 { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+.ad-text p { font-size: 12px; color: var(--muted); }
+.ad-btn { background: var(--accent); color: white; border: none; padding: 8px 18px; border-radius: 8px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+
+.hidden { display: none; }
+.section { display: none; }
+.section.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back-btn" href="index.html">← 返回</a>
+  <span class="topbar-title">🚗 汽车油耗计算器</span>
+</div>
+
+<div class="hero">
+  <div class="hero-icon">⛽</div>
+  <h1>汽车油耗计算器</h1>
+  <p>油耗统计 · 费用估算 · 加油记录</p>
+</div>
+
+<div class="container">
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('calc')">油耗计算</div>
+    <div class="tab" onclick="switchTab('cost')">行程费用</div>
+    <div class="tab" onclick="switchTab('record')">加油记录</div>
+  </div>
+
+  <!-- Tab 1: 油耗计算 -->
+  <div id="tab-calc" class="section active">
+    <div class="card">
+      <div class="card-title">⛽ 实际油耗计算</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">加满油后记录里程，再次加满油时计算实际油耗</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>行驶里程</label>
+          <input type="number" id="distance" placeholder="例如 500" min="0">
+          <span class="unit">公里 (km)</span>
+        </div>
+        <div class="form-group">
+          <label>加油量</label>
+          <input type="number" id="fuel-amount" placeholder="例如 40" min="0" step="0.1">
+          <span class="unit">升 (L)</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;color:var(--muted);display:block;margin-bottom:8px;">燃油类型</label>
+        <div class="fuel-types">
+          <div class="fuel-btn active" onclick="selectFuel(this,'92号',7.5)">92号汽油</div>
+          <div class="fuel-btn" onclick="selectFuel(this,'95号',8.0)">95号汽油</div>
+          <div class="fuel-btn" onclick="selectFuel(this,'98号',8.8)">98号汽油</div>
+          <div class="fuel-btn" onclick="selectFuel(this,'柴油',7.2)">柴油</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>油价 (元/升)</label>
+          <input type="number" id="fuel-price" placeholder="7.50" step="0.01" value="7.50" min="0">
+        </div>
+        <div class="form-group">
+          <label>车辆类型</label>
+          <select id="car-type">
+            <option value="小型轿车">小型轿车</option>
+            <option value="SUV">SUV / MPV</option>
+            <option value="皮卡">皮卡 / 货车</option>
+            <option value="新能源">新能源汽车</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="calc-btn" onclick="calcFuel()">📊 计算油耗</button>
+    </div>
+
+    <div id="fuel-result" class="hidden">
+      <div class="card">
+        <div class="card-title">📈 油耗分析结果</div>
+        <div class="result-grid">
+          <div class="result-box highlight">
+            <div class="result-val" id="r-consumption">-</div>
+            <div class="result-label">百公里油耗 (L/100km)</div>
+          </div>
+          <div class="result-box">
+            <div class="result-val" id="r-cost-per-100">-</div>
+            <div class="result-label">百公里费用 (元)</div>
+          </div>
+          <div class="result-box">
+            <div class="result-val" id="r-total-cost">-</div>
+            <div class="result-label">本次费用 (元)</div>
+          </div>
+          <div class="result-box">
+            <div class="result-val" id="r-per-km">-</div>
+            <div class="result-label">每公里费用 (元)</div>
+          </div>
+        </div>
+
+        <div id="level-bar" style="margin-top:8px;padding:14px;background:var(--card2);border-radius:10px;font-size:13px;text-align:center;"></div>
+
+        <div style="margin-top:16px;">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:10px;">同类车型油耗对比</div>
+          <div class="compare-bar" id="compare-bars"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2: 行程费用 -->
+  <div id="tab-cost" class="section">
+    <div class="card">
+      <div class="card-title">🗺️ 行程费用估算</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>预计行驶里程</label>
+          <input type="number" id="trip-distance" placeholder="例如 200" min="0">
+          <span class="unit">公里 (km)</span>
+        </div>
+        <div class="form-group">
+          <label>车辆百公里油耗</label>
+          <input type="number" id="trip-consumption" placeholder="例如 8.5" min="0" step="0.1">
+          <span class="unit">升 (L/100km)</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>油价 (元/升)</label>
+          <input type="number" id="trip-price" placeholder="7.50" step="0.01" value="7.50" min="0">
+        </div>
+        <div class="form-group">
+          <label>高速过路费</label>
+          <input type="number" id="trip-toll" placeholder="0" min="0" value="0">
+          <span class="unit">元 (可选)</span>
+        </div>
+      </div>
+      <div class="form-group full" style="margin-bottom:14px;">
+        <label>乘坐人数 (AA制分摊)</label>
+        <input type="number" id="trip-persons" placeholder="1" min="1" max="9" value="1">
+      </div>
+      <button class="calc-btn" onclick="calcTrip()">🚗 估算行程费用</button>
+    </div>
+
+    <div id="trip-result" class="hidden">
+      <div class="card">
+        <div class="card-title">💰 费用明细</div>
+        <div class="result-grid">
+          <div class="result-box highlight">
+            <div class="result-val" id="tr-fuel-cost">-</div>
+            <div class="result-label">燃油费用 (元)</div>
+          </div>
+          <div class="result-box">
+            <div class="result-val" id="tr-total-cost">-</div>
+            <div class="result-label">总费用 (元)</div>
+          </div>
+          <div class="result-box">
+            <div class="result-val" id="tr-per-person">-</div>
+            <div class="result-label">每人均摊 (元)</div>
+          </div>
+          <div class="result-box">
+            <div class="result-val" id="tr-fuel-needed">-</div>
+            <div class="result-label">需加油量 (升)</div>
+          </div>
+        </div>
+
+        <!-- 里程费用对比 -->
+        <div style="margin-top:16px;padding:14px;background:var(--card2);border-radius:10px;">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">与其他出行方式对比 (估算)</div>
+          <div id="transport-compare"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ad-bar">
+      <div class="ad-text">
+        <h4>🛣️ 高速免费日出行攻略</h4>
+        <p>节假日免费时段 · 最优路线规划 · 节省过路费技巧</p>
+      </div>
+      <button class="ad-btn">¥9.9 获取</button>
+    </div>
+  </div>
+
+  <!-- Tab 3: 加油记录 -->
+  <div id="tab-record" class="section">
+    <div class="card">
+      <div class="card-title">📝 添加加油记录</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>加油日期</label>
+          <input type="date" id="rec-date">
+        </div>
+        <div class="form-group">
+          <label>当前里程表</label>
+          <input type="number" id="rec-mileage" placeholder="例如 12500" min="0">
+          <span class="unit">km</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>加油量 (升)</label>
+          <input type="number" id="rec-liters" placeholder="例如 40" min="0" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>单价 (元/升)</label>
+          <input type="number" id="rec-price" placeholder="7.50" step="0.01" min="0">
+        </div>
+      </div>
+      <button class="calc-btn" onclick="addRecord()">➕ 添加记录</button>
+    </div>
+
+    <div id="records-stats" class="hidden card">
+      <div class="card-title">📊 加油统计</div>
+      <div class="result-grid">
+        <div class="result-box">
+          <div class="result-val" id="stat-times">-</div>
+          <div class="result-label">加油次数</div>
+        </div>
+        <div class="result-box">
+          <div class="result-val" id="stat-total-liters">-</div>
+          <div class="result-label">累计加油 (L)</div>
+        </div>
+        <div class="result-box highlight">
+          <div class="result-val" id="stat-total-spend">-</div>
+          <div class="result-label">累计花费 (元)</div>
+        </div>
+        <div class="result-box">
+          <div class="result-val" id="stat-avg-consumption">-</div>
+          <div class="result-label">平均油耗 (L/100km)</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="records-list" class="card hidden">
+      <div class="card-title">🗓️ 加油历史</div>
+      <div id="records-items"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let selectedFuelType = '92号';
+let records = JSON.parse(localStorage.getItem('fuel_records') || '[]');
+
+// 初始化
+document.getElementById('rec-date').value = new Date().toISOString().split('T')[0];
+renderRecords();
+
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach((el, i) => el.classList.toggle('active', ['calc','cost','record'][i] === t));
+  document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + t).classList.add('active');
+}
+
+function selectFuel(el, type, price) {
+  document.querySelectorAll('.fuel-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  selectedFuelType = type;
+  document.getElementById('fuel-price').value = price;
+}
+
+function calcFuel() {
+  const dist = parseFloat(document.getElementById('distance').value);
+  const fuel = parseFloat(document.getElementById('fuel-amount').value);
+  const price = parseFloat(document.getElementById('fuel-price').value);
+  const carType = document.getElementById('car-type').value;
+
+  if (!dist || !fuel || dist <= 0 || fuel <= 0) { alert('请输入有效的里程和加油量'); return; }
+
+  const consumption = (fuel / dist * 100).toFixed(2);
+  const cost100 = (consumption * price).toFixed(1);
+  const totalCost = (fuel * price).toFixed(1);
+  const perKm = (fuel * price / dist).toFixed(3);
+
+  document.getElementById('r-consumption').textContent = consumption;
+  document.getElementById('r-cost-per-100').textContent = '¥' + cost100;
+  document.getElementById('r-total-cost').textContent = '¥' + totalCost;
+  document.getElementById('r-per-km').textContent = '¥' + perKm;
+
+  const benchmarks = { '小型轿车': 7.0, 'SUV': 9.5, '皮卡': 12.0, '新能源': 2.0 };
+  const avg = benchmarks[carType] || 8.0;
+  const c = parseFloat(consumption);
+  let levelHtml, levelColor;
+  if (c <= avg * 0.85) { levelHtml = '🌿 油耗优秀！低于同类均值 ' + (avg - c).toFixed(1) + 'L/100km'; levelColor = '#18a87a'; }
+  else if (c <= avg * 1.1) { levelHtml = '👍 油耗正常，接近同类平均水平 ' + avg + 'L/100km'; levelColor = '#f48c06'; }
+  else { levelHtml = '⚠️ 油耗偏高，超出均值 ' + (c - avg).toFixed(1) + 'L/100km，建议检查轮胎气压'; levelColor = '#e85d04'; }
+  document.getElementById('level-bar').innerHTML = `<span style="color:${levelColor}">${levelHtml}</span>`;
+
+  const compareData = [
+    { label: '本车', val: c, color: '#e85d04' },
+    { label: carType + '均值', val: avg, color: '#f48c06' },
+    { label: '国家标准', val: avg * 0.8, color: '#18a87a' }
+  ];
+  const maxVal = Math.max(...compareData.map(x => x.val));
+  document.getElementById('compare-bars').innerHTML = compareData.map(d => `
+    <div class="compare-item">
+      <div class="compare-label">${d.label}</div>
+      <div class="bar-wrap"><div class="bar-fill" style="width:${(d.val/maxVal*100).toFixed(0)}%;background:${d.color}"></div></div>
+      <div class="compare-val" style="color:${d.color}">${d.val.toFixed(1)}L</div>
+    </div>`).join('');
+
+  document.getElementById('fuel-result').classList.remove('hidden');
+}
+
+function calcTrip() {
+  const dist = parseFloat(document.getElementById('trip-distance').value);
+  const cons = parseFloat(document.getElementById('trip-consumption').value);
+  const price = parseFloat(document.getElementById('trip-price').value);
+  const toll = parseFloat(document.getElementById('trip-toll').value) || 0;
+  const persons = parseInt(document.getElementById('trip-persons').value) || 1;
+
+  if (!dist || !cons || !price) { alert('请填写完整信息'); return; }
+
+  const fuelNeeded = (dist * cons / 100).toFixed(1);
+  const fuelCost = (fuelNeeded * price).toFixed(1);
+  const totalCost = (parseFloat(fuelCost) + toll).toFixed(1);
+  const perPerson = (totalCost / persons).toFixed(1);
+
+  document.getElementById('tr-fuel-cost').textContent = '¥' + fuelCost;
+  document.getElementById('tr-total-cost').textContent = '¥' + totalCost;
+  document.getElementById('tr-per-person').textContent = '¥' + perPerson;
+  document.getElementById('tr-fuel-needed').textContent = fuelNeeded + 'L';
+
+  const taxiCost = (dist * 2.5).toFixed(0);
+  const trainCost = (dist * 0.5).toFixed(0);
+  const planeCost = dist > 300 ? (dist * 0.8 + 200).toFixed(0) : '—';
+  document.getElementById('transport-compare').innerHTML = [
+    { icon: '🚗', name: '自驾', cost: totalCost, note: persons > 1 ? `${persons}人均摊¥${perPerson}` : '含过路费' },
+    { icon: '🚕', name: '打车', cost: taxiCost, note: '约估' },
+    { icon: '🚄', name: '高铁', cost: trainCost, note: '约估' },
+    { icon: '✈️', name: '飞机', cost: planeCost, note: dist > 300 ? '约估' : '距离过短' },
+  ].map(d => `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+    <span>${d.icon} ${d.name}</span><span style="color:var(--muted)">${d.note}</span><span style="color:var(--accent2);font-weight:600">${d.cost !== '—' ? '¥' + d.cost : '—'}</span></div>`).join('');
+
+  document.getElementById('trip-result').classList.remove('hidden');
+}
+
+function addRecord() {
+  const date = document.getElementById('rec-date').value;
+  const mileage = parseFloat(document.getElementById('rec-mileage').value);
+  const liters = parseFloat(document.getElementById('rec-liters').value);
+  const price = parseFloat(document.getElementById('rec-price').value);
+
+  if (!date || !mileage || !liters || !price) { alert('请填写完整加油信息'); return; }
+
+  records.unshift({ date, mileage, liters, price, total: (liters * price).toFixed(1) });
+  localStorage.setItem('fuel_records', JSON.stringify(records));
+  renderRecords();
+  document.getElementById('rec-mileage').value = '';
+  document.getElementById('rec-liters').value = '';
+  document.getElementById('rec-price').value = '';
+}
+
+function renderRecords() {
+  if (records.length === 0) return;
+  document.getElementById('records-list').classList.remove('hidden');
+  document.getElementById('records-stats').classList.remove('hidden');
+
+  let totalLiters = 0, totalSpend = 0;
+  records.forEach(r => { totalLiters += r.liters; totalSpend += parseFloat(r.total); });
+
+  let avgCons = '—';
+  if (records.length >= 2) {
+    const sorted = [...records].sort((a, b) => a.mileage - b.mileage);
+    const distTotal = sorted[sorted.length-1].mileage - sorted[0].mileage;
+    if (distTotal > 0) avgCons = (totalLiters / distTotal * 100).toFixed(1);
+  }
+
+  document.getElementById('stat-times').textContent = records.length;
+  document.getElementById('stat-total-liters').textContent = totalLiters.toFixed(1);
+  document.getElementById('stat-total-spend').textContent = '¥' + totalSpend.toFixed(0);
+  document.getElementById('stat-avg-consumption').textContent = avgCons;
+
+  document.getElementById('records-items').innerHTML = records.map((r, i) => `
+    <div class="history-item">
+      <div>
+        <div class="history-main">${r.date} · ${r.mileage.toLocaleString()} km</div>
+        <div class="history-sub">${r.liters}L × ¥${r.price}/L</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="history-val">¥${r.total}</span>
+        <span style="cursor:pointer;color:var(--muted);font-size:18px" onclick="deleteRecord(${i})">×</span>
+      </div>
+    </div>`).join('');
+}
+
+function deleteRecord(i) {
+  records.splice(i, 1);
+  localStorage.setItem('fuel_records', JSON.stringify(records));
+  renderRecords();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>亲戚称呼计算器</title>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff1f2;--card:#fff;--ink:#1a0000;--muted:#78716c;--accent:#e11d48;--border:#fecdd3;--orange:#ea580c;--gold:#b45309;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+.topbar{background:#1a0000;color:#fff;padding:0 20px;height:56px;display:flex;align-items:center;gap:16px;}
+.topbar a{color:#fda4af;text-decoration:none;font-size:.85rem;}.topbar a:hover{color:#fff;}
+.topbar-title{font-family:'ZCOOL XiaoWei',serif;font-size:1.1rem;}
+.container{max-width:780px;margin:0 auto;padding:24px 16px 60px;}
+.page-title{text-align:center;padding:24px 0 20px;}
+.page-title h1{font-family:'ZCOOL XiaoWei',serif;font-size:2rem;letter-spacing:2px;}
+.page-title h1 span{color:var(--accent);}
+.page-title p{color:var(--muted);font-size:.9rem;margin-top:6px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px;margin-bottom:18px;}
+.card-title{font-size:.95rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.ad-bar{background:#fff1f2;border:1px dashed #fda4af;border-radius:10px;padding:12px;text-align:center;color:#9f1239;font-size:.8rem;margin-bottom:16px;}
+
+/* PATH BUILDER */
+.path-display{
+  display:flex;align-items:center;flex-wrap:wrap;gap:6px;
+  min-height:44px;padding:10px 14px;
+  background:#fff1f2;border:1.5px solid var(--border);border-radius:10px;
+  margin-bottom:14px;font-size:.9rem;
+}
+.path-step{
+  background:var(--accent);color:#fff;padding:4px 10px;border-radius:20px;font-size:.82rem;
+  display:flex;align-items:center;gap:4px;
+}
+.path-step button{background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;padding:0;font-size:.9rem;line-height:1;}
+.path-step button:hover{color:#fff;}
+.path-arrow{color:var(--muted);font-size:.85rem;}
+.path-empty{color:var(--muted);font-size:.85rem;}
+.path-self{background:#4f46e5;padding:4px 10px;border-radius:20px;font-size:.82rem;color:#fff;}
+
+/* STEP BUTTONS */
+.step-group{margin-bottom:16px;}
+.step-label{font-size:.8rem;color:var(--muted);margin-bottom:8px;font-weight:600;}
+.step-btns{display:flex;flex-wrap:wrap;gap:7px;}
+.step-btn{
+  padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;
+  background:#fff;cursor:pointer;font-family:'Noto Sans SC',sans-serif;font-size:.85rem;
+  transition:all .2s;color:var(--ink);
+}
+.step-btn:hover{border-color:var(--accent);color:var(--accent);background:#fff1f2;}
+.step-btn:active{transform:scale(.97);}
+
+/* GENDER */
+.gender-toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+.gender-btn{padding:10px;border:1.5px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;font-family:'Noto Sans SC',sans-serif;font-size:.9rem;text-align:center;transition:all .2s;}
+.gender-btn.active{border-color:var(--accent);background:#fff1f2;color:var(--accent);font-weight:700;}
+
+/* RESULT */
+.result-hero{
+  background:linear-gradient(135deg,#fff1f2,#ffe4e6);
+  border:2px solid var(--accent);border-radius:16px;
+  padding:28px;text-align:center;
+  animation:fadeUp .4s ease;
+}
+.result-title{font-size:.85rem;color:var(--muted);margin-bottom:6px;}
+.result-call{font-family:'ZCOOL XiaoWei',serif;font-size:3rem;color:var(--accent);line-height:1;}
+.result-call-sub{font-size:.9rem;color:var(--muted);margin-top:8px;}
+.result-path-str{font-size:.82rem;color:var(--gold);margin-top:10px;background:#fef9c3;padding:6px 12px;border-radius:8px;display:inline-block;}
+
+/* QUICK QUERY TABLE */
+.qtable{width:100%;border-collapse:collapse;font-size:.85rem;}
+.qtable th{background:#fff1f2;padding:9px 12px;text-align:left;color:var(--muted);font-size:.78rem;}
+.qtable td{padding:9px 12px;border-bottom:1px solid var(--border);}
+.qtable tr:last-child td{border:none;}
+.qtable .call{font-weight:700;color:var(--accent);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="index.html">← 返回首页</a><span style="color:#555">/</span>
+  <span class="topbar-title">👨‍👩‍👧‍👦 亲戚称呼计算器</span>
+</div>
+<div class="container">
+  <div class="page-title">
+    <h1>亲戚<span>称呼</span>计算器</h1>
+    <p>过年不再叫错人 · 逐步选择关系 · 自动算出称呼</p>
+  </div>
+  <div class="ad-bar">🧧 过年红包文案 / 拜年祝词 · 内容合作欢迎联系</div>
+
+  <div class="card">
+    <div class="card-title">👤 您的性别（影响称呼）</div>
+    <div class="gender-toggle">
+      <button class="gender-btn active" id="self-male" onclick="setSelfGender('male')">👨 我是男性</button>
+      <button class="gender-btn" id="self-female" onclick="setSelfGender('female')">👩 我是女性</button>
+    </div>
+    <div class="card-title">🗺️ 逐步选择关系路径</div>
+    <div class="path-display" id="path-display">
+      <span class="path-self">我</span>
+    </div>
+    <div id="steps-container"></div>
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button onclick="undoStep()" style="flex:1;padding:11px;border:1.5px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;font-family:'Noto Sans SC',sans-serif;font-size:.88rem;">← 撤销一步</button>
+      <button onclick="resetPath()" style="flex:1;padding:11px;border:1.5px solid #fca5a5;border-radius:10px;background:#fff;cursor:pointer;font-family:'Noto Sans SC',sans-serif;font-size:.88rem;color:#dc2626;">🔄 重新开始</button>
+    </div>
+  </div>
+
+  <div id="result-card" style="display:none;">
+    <div class="card">
+      <div class="card-title">🎉 称呼结果</div>
+      <div class="result-hero">
+        <div class="result-title">您应该称呼对方为</div>
+        <div class="result-call" id="result-call">--</div>
+        <div class="result-call-sub" id="result-sub">--</div>
+        <div class="result-path-str" id="result-path-str"></div>
+      </div>
+      <div style="margin-top:12px;background:#fff8dc;border-radius:10px;padding:12px;font-size:.82rem;color:var(--gold);line-height:1.7;" id="result-note"></div>
+    </div>
+  </div>
+
+  <!-- QUICK REF TABLE -->
+  <div class="card">
+    <div class="card-title">📖 常见亲戚称呼速查</div>
+    <table class="qtable">
+      <thead><tr><th>关系</th><th>男性称呼</th><th>女性称呼</th><th>配偶称呼</th></tr></thead>
+      <tbody>
+        <tr><td>父亲的父亲</td><td class="call">爷爷</td><td class="call">奶奶</td><td>-</td></tr>
+        <tr><td>母亲的父亲</td><td class="call">外公/姥爷</td><td class="call">外婆/姥姥</td><td>-</td></tr>
+        <tr><td>父亲的兄弟</td><td class="call">伯伯/叔叔</td><td class="call">婶婶</td><td>伯母/婶母</td></tr>
+        <tr><td>父亲的姐妹</td><td class="call">姑姑</td><td class="call">-</td><td>姑父</td></tr>
+        <tr><td>母亲的兄弟</td><td class="call">舅舅</td><td class="call">-</td><td>舅妈</td></tr>
+        <tr><td>母亲的姐妹</td><td class="call">阿姨</td><td class="call">-</td><td>姨父</td></tr>
+        <tr><td>伯叔的孩子</td><td class="call">堂兄/堂弟</td><td class="call">堂姐/堂妹</td><td>-</td></tr>
+        <tr><td>姑舅姨的孩子</td><td class="call">表兄/表弟</td><td class="call">表姐/表妹</td><td>-</td></tr>
+        <tr><td>配偶的父亲</td><td class="call">公公（夫）/岳父（妻）</td><td class="call">婆婆/岳母</td><td>-</td></tr>
+        <tr><td>配偶的兄弟</td><td class="call">大伯/小叔（夫）/大舅/小舅（妻）</td><td class="call">妯娌/小姑子</td><td>-</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="ad-bar">🎊 春节拜年文案定制 · 走亲戚攻略 · 内容合作</div>
+</div>
+<script>
+let selfGender = 'male';
+let path = [];
+
+// Relation tree: [label, gender_of_person, key]
+const STEPS = {
+  root: [
+    ['爸爸', 'male', 'father'],
+    ['妈妈', 'female', 'mother'],
+    ['哥哥', 'male', 'elder_brother'],
+    ['弟弟', 'male', 'younger_brother'],
+    ['姐姐', 'female', 'elder_sister'],
+    ['妹妹', 'female', 'younger_sister'],
+    ['老公/男友', 'male', 'husband'],
+    ['老婆/女友', 'female', 'wife'],
+  ],
+  father: [
+    ['爸爸(爷爷)', 'male', 'ff'],
+    ['妈妈(奶奶)', 'female', 'fm'],
+    ['哥哥(伯伯)', 'male', 'fb'],
+    ['弟弟(叔叔)', 'male', 'fu'],
+    ['姐姐/妹妹(姑姑)', 'female', 'fa'],
+  ],
+  mother: [
+    ['爸爸(外公)', 'male', 'mf'],
+    ['妈妈(外婆)', 'female', 'mm'],
+    ['哥哥/弟弟(舅舅)', 'male', 'mu'],
+    ['姐姐/妹妹(阿姨)', 'female', 'ma'],
+  ],
+  elder_brother: [['孩子', 'neutral', 'elder_bro_child'],['配偶', 'female', 'elder_bro_spouse']],
+  younger_brother: [['孩子', 'neutral', 'younger_bro_child'],['配偶', 'female', 'younger_bro_spouse']],
+  elder_sister: [['孩子', 'neutral', 'elder_sis_child'],['配偶', 'male', 'elder_sis_spouse']],
+  younger_sister: [['孩子', 'neutral', 'younger_sis_child'],['配偶', 'male', 'younger_sis_spouse']],
+  fb: [['孩子', 'neutral', 'fb_child']],
+  fu: [['孩子', 'neutral', 'fu_child']],
+  fa: [['孩子', 'neutral', 'fa_child']],
+  mu: [['孩子', 'neutral', 'mu_child']],
+  ma: [['孩子', 'neutral', 'ma_child']],
+};
+
+// Result database: [selfGender, path_str] -> {call, sub, note}
+const RESULTS = {
+  'ff': {call:'爷爷', sub:'父亲的父亲', note:'爷爷是父亲这边的祖父，北方多称"爷爷"，部分地区称"祖父"。'},
+  'fm': {call:'奶奶', sub:'父亲的母亲', note:'奶奶是父亲的母亲，部分南方地区称"婆婆"或"阿婆"。'},
+  'mf': {call:'外公', sub:'母亲的父亲', note:'外公也称"姥爷"（北方），是母亲的父亲。'},
+  'mm': {call:'外婆', sub:'母亲的母亲', note:'外婆也称"姥姥"（北方），是母亲的母亲。'},
+  'fb': {call:'伯伯', sub:'父亲的哥哥', note:'父亲的哥哥（父亲年长的兄弟）称"伯伯"，妻子称"伯母"。'},
+  'fu': {call:'叔叔', sub:'父亲的弟弟', note:'父亲的弟弟称"叔叔"，妻子称"婶婶/婶母"。'},
+  'fa': {call:'姑姑', sub:'父亲的姐妹', note:'父亲的姐妹统称"姑姑"，丈夫称"姑父"。'},
+  'mu': {call:'舅舅', sub:'母亲的兄弟', note:'母亲的兄弟统称"舅舅"，妻子称"舅妈"。'},
+  'ma': {call:'阿姨', sub:'母亲的姐妹', note:'母亲的姐妹统称"阿姨/姨妈"，丈夫称"姨父"。'},
+  'elder_brother': {call:'哥哥', sub:'父母共同的年长兄弟', note:'同父母的年长男性兄弟称"哥哥"。'},
+  'younger_brother': {call:'弟弟', sub:'父母共同的年幼兄弟', note:'同父母的年幼男性兄弟称"弟弟"。'},
+  'elder_sister': {call:'姐姐', sub:'父母共同的年长姐妹', note:'同父母的年长女性兄弟称"姐姐"。'},
+  'younger_sister': {call:'妹妹', sub:'父母共同的年幼姐妹', note:'同父母的年幼女性兄弟称"妹妹"。'},
+  'elder_bro_spouse': {call_male:'嫂子', call_female:'嫂子', sub:'哥哥的妻子', note:'哥哥的妻子称"嫂子/嫂嫂"。'},
+  'younger_bro_spouse': {call_male:'弟妹', call_female:'弟妹', sub:'弟弟的妻子', note:'弟弟的妻子称"弟妹"。'},
+  'elder_sis_spouse': {call_male:'姐夫', call_female:'姐夫', sub:'姐姐的丈夫', note:'姐姐的丈夫称"姐夫"。'},
+  'younger_sis_spouse': {call_male:'妹夫', call_female:'妹夫', sub:'妹妹的丈夫', note:'妹妹的丈夫称"妹夫"。'},
+  'elder_bro_child_male': {call:'侄子', sub:'哥哥的儿子', note:'兄弟的儿子称"侄子"，女儿称"侄女"。'},
+  'elder_bro_child_female': {call:'侄女', sub:'哥哥的女儿', note:''},
+  'younger_bro_child_male': {call:'侄子', sub:'弟弟的儿子', note:''},
+  'younger_bro_child_female': {call:'侄女', sub:'弟弟的女儿', note:''},
+  'elder_sis_child_male': {call:'外甥', sub:'姐姐的儿子', note:'姐妹的孩子称"外甥（男）"或"外甥女（女）"。'},
+  'elder_sis_child_female': {call:'外甥女', sub:'姐姐的女儿', note:''},
+  'younger_sis_child_male': {call:'外甥', sub:'妹妹的儿子', note:''},
+  'younger_sis_child_female': {call:'外甥女', sub:'妹妹的女儿', note:''},
+  'fb_child_male': {call:'堂兄/堂弟', sub:'伯伯的儿子', note:'父亲兄弟的孩子称"堂兄弟/堂姐妹"（同姓堂亲）。'},
+  'fb_child_female': {call:'堂姐/堂妹', sub:'伯伯的女儿', note:''},
+  'fu_child_male': {call:'堂兄/堂弟', sub:'叔叔的儿子', note:''},
+  'fu_child_female': {call:'堂姐/堂妹', sub:'叔叔的女儿', note:''},
+  'fa_child_male': {call:'表兄/表弟', sub:'姑姑的儿子', note:'父亲姐妹或母亲兄弟姐妹的孩子称"表兄弟/表姐妹"（异姓表亲）。'},
+  'fa_child_female': {call:'表姐/表妹', sub:'姑姑的女儿', note:''},
+  'mu_child_male': {call:'表兄/表弟', sub:'舅舅的儿子', note:''},
+  'mu_child_female': {call:'表姐/表妹', sub:'舅舅的女儿', note:''},
+  'ma_child_male': {call:'表兄/表弟', sub:'阿姨的儿子', note:''},
+  'ma_child_female': {call:'表姐/表妹', sub:'阿姨的女儿', note:''},
+  'husband': {call:'老公/丈夫', sub:'配偶（男）', note:'丈夫，法律上的配偶。'},
+  'wife': {call:'老婆/妻子', sub:'配偶（女）', note:'妻子，法律上的配偶。'},
+  'father': {call:'爸爸/父亲', sub:'生父或养父', note:''},
+  'mother': {call:'妈妈/母亲', sub:'生母或养母', note:''},
+};
+
+function setSelfGender(g) {
+  selfGender = g;
+  document.getElementById('self-male').classList.toggle('active', g==='male');
+  document.getElementById('self-female').classList.toggle('active', g==='female');
+  resetPath();
+}
+
+function resetPath() {
+  path = [];
+  document.getElementById('result-card').style.display = 'none';
+  render();
+}
+
+function undoStep() {
+  if (path.length > 0) path.pop();
+  document.getElementById('result-card').style.display = 'none';
+  render();
+}
+
+function addStep(key, label) {
+  path.push({key, label});
+  checkResult();
+  render();
+}
+
+function checkResult() {
+  const fullKey = path.map(p=>p.key).join('_');
+  // Check if terminal node
+  let res = RESULTS[fullKey];
+  if (!res) {
+    // Check last key
+    const lastKey = path[path.length-1].key;
+    res = RESULTS[lastKey];
+  }
+  if (res) {
+    let call = res.call || (selfGender==='male'?res.call_male:res.call_female) || res.call_male || '--';
+    document.getElementById('result-call').textContent = call;
+    document.getElementById('result-sub').textContent = res.sub || '';
+    document.getElementById('result-path-str').textContent = '我 → ' + path.map(p=>p.label).join(' → ') + ' → 对方';
+    document.getElementById('result-note').textContent = res.note || '';
+    document.getElementById('result-card').style.display = 'block';
+  }
+}
+
+function getNextSteps() {
+  if (!path.length) return STEPS.root;
+  const lastKey = path[path.length-1].key;
+  // Handle child gender steps
+  if (lastKey.endsWith('_child')) return [
+    ['儿子', 'male', lastKey + '_male'],
+    ['女儿', 'female', lastKey + '_female'],
+  ];
+  return STEPS[lastKey] || [];
+}
+
+function render() {
+  // Path display
+  const pd = document.getElementById('path-display');
+  if (!path.length) {
+    pd.innerHTML = '<span class="path-self">我</span><span class="path-empty">← 请从下方选择关系</span>';
+  } else {
+    pd.innerHTML = '<span class="path-self">我</span>' + path.map((p,i)=>`
+      <span class="path-arrow">→</span>
+      <span class="path-step">${p.label}<button onclick="removeTo(${i})">✕</button></span>
+    `).join('');
+  }
+  // Steps
+  const nextSteps = getNextSteps();
+  const container = document.getElementById('steps-container');
+  if (!nextSteps.length) { container.innerHTML = ''; return; }
+  container.innerHTML = `
+    <div class="step-group">
+      <div class="step-label">选择 "${path.length?path[path.length-1].label:'您'}" 的亲属：</div>
+      <div class="step-btns">
+        ${nextSteps.map(([label,,key])=>`<button class="step-btn" onclick="addStep('${key}','${label}')">${label}</button>`).join('')}
+      </div>
+    </div>`;
+}
+
+function removeTo(i) {
+  path = path.slice(0, i);
+  document.getElementById('result-card').style.display = 'none';
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

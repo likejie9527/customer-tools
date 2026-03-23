@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>快递运费估算器</title>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fffbeb;--card:#fff;--ink:#1c0a00;--muted:#78716c;--accent:#d97706;--border:#fde68a;--blue:#2563eb;--green:#16a34a;--red:#dc2626;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+.topbar{background:#1c0a00;color:#fff;padding:0 20px;height:56px;display:flex;align-items:center;gap:16px;}
+.topbar a{color:#fcd34d;text-decoration:none;font-size:.85rem;}.topbar a:hover{color:#fff;}
+.topbar-title{font-family:'ZCOOL XiaoWei',serif;font-size:1.1rem;}
+.container{max-width:820px;margin:0 auto;padding:24px 16px 60px;}
+.page-title{text-align:center;padding:24px 0 18px;}
+.page-title h1{font-family:'ZCOOL XiaoWei',serif;font-size:2rem;letter-spacing:2px;}
+.page-title h1 span{color:var(--accent);}
+.page-title p{color:var(--muted);font-size:.9rem;margin-top:6px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px;margin-bottom:18px;}
+.card-title{font-size:.95rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.ad-bar{background:#fffbeb;border:1px dashed #fcd34d;border-radius:10px;padding:12px;text-align:center;color:#92400e;font-size:.8rem;margin-bottom:16px;}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:480px){.form-grid{grid-template-columns:1fr;}}
+.form-group label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:5px;font-weight:600;}
+.form-group select,.form-group input{
+  width:100%;padding:11px 13px;border:1.5px solid var(--border);
+  border-radius:10px;font-family:'Noto Sans SC',sans-serif;font-size:.9rem;
+  outline:none;background:#fff;transition:border-color .2s;
+}
+.form-group select:focus,.form-group input:focus{border-color:var(--accent);}
+.calc-btn{width:100%;padding:14px;margin-top:16px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;font-family:'Noto Sans SC',sans-serif;cursor:pointer;transition:all .2s;}
+.calc-btn:hover{background:#b45309;}
+
+/* SIZE HELPER */
+.size-helper{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.size-preset{padding:9px 8px;border:1.5px solid var(--border);border-radius:9px;background:#fff;cursor:pointer;text-align:center;font-size:.8rem;transition:all .2s;}
+.size-preset:hover{border-color:var(--accent);color:var(--accent);}
+.size-preset .preset-name{font-weight:700;margin-bottom:2px;}
+.size-preset .preset-dim{color:var(--muted);font-size:.72rem;}
+
+/* RESULTS */
+.result-section{display:none;}
+.result-section.show{display:block;animation:fadeUp .4s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+
+.company-cards{display:flex;flex-direction:column;gap:10px;}
+.company-card{display:flex;align-items:center;gap:14px;padding:16px;border:1.5px solid var(--border);border-radius:14px;transition:all .2s;}
+.company-card:hover{border-color:var(--accent);box-shadow:0 2px 12px rgba(217,119,6,.1);}
+.company-card.cheapest{border-color:var(--green);background:#f0fdf4;}
+.company-icon{font-size:2rem;flex-shrink:0;}
+.company-info{flex:1;}
+.company-name{font-weight:700;font-size:.95rem;}
+.company-speed{font-size:.78rem;color:var(--muted);margin-top:2px;}
+.company-price{font-family:'ZCOOL XiaoWei',serif;font-size:1.6rem;color:var(--accent);}
+.company-price.best-price{color:var(--green);}
+.price-note{font-size:.72rem;color:var(--muted);}
+.cheapest-badge{font-size:.7rem;background:#16a34a;color:#fff;padding:2px 7px;border-radius:8px;margin-left:6px;}
+
+/* INFO */
+.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+@media(max-width:480px){.info-grid{grid-template-columns:1fr 1fr;}}
+.info-box{background:var(--bg);border-radius:10px;padding:12px;text-align:center;}
+.info-val{font-family:'ZCOOL XiaoWei',serif;font-size:1.4rem;color:var(--accent);}
+.info-name{font-size:.72rem;color:var(--muted);margin-top:2px;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="index.html">← 返回首页</a><span style="color:#555">/</span>
+  <span class="topbar-title">📦 快递运费估算器</span>
+</div>
+<div class="container">
+  <div class="page-title">
+    <h1>快递<span>运费</span>估算</h1>
+    <p>各大快递公司价格对比 · 重量/体积 · 同城/省内/全国</p>
+  </div>
+  <div class="ad-bar">📢 广告位 · 快递寄件 / 物流电商类合作欢迎联系</div>
+
+  <div class="card">
+    <div class="card-title">📐 包裹尺寸快捷选择</div>
+    <div class="size-helper">
+      <div class="size-preset" onclick="setSize(20,15,10,0.3)"><div class="preset-name">📱 手机盒</div><div class="preset-dim">20×15×10cm</div></div>
+      <div class="size-preset" onclick="setSize(30,20,15,1)"><div class="preset-name">👟 鞋盒</div><div class="preset-dim">30×20×15cm</div></div>
+      <div class="size-preset" onclick="setSize(40,30,20,2)"><div class="preset-name">👕 衣服袋</div><div class="preset-dim">40×30×20cm</div></div>
+      <div class="size-preset" onclick="setSize(50,40,30,5)"><div class="preset-name">📦 中等箱</div><div class="preset-dim">50×40×30cm</div></div>
+      <div class="size-preset" onclick="setSize(60,50,40,10)"><div class="preset-name">🖥️ 电器箱</div><div class="preset-dim">60×50×40cm</div></div>
+      <div class="size-preset" onclick="setSize(0,0,0,0)"><div class="preset-name">✏️ 自定义</div><div class="preset-dim">手动输入</div></div>
+    </div>
+
+    <div class="form-grid" style="margin-bottom:14px;">
+      <div class="form-group">
+        <label>寄件地区</label>
+        <select id="from-region">
+          <option value="same">同城寄件</option>
+          <option value="nearby">省内/周边城市</option>
+          <option value="national" selected>全国（跨省）</option>
+          <option value="remote">偏远地区（新疆/西藏）</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>实际重量（kg）</label>
+        <input type="number" id="weight" value="1" min="0.01" max="500" step="0.1">
+      </div>
+      <div class="form-group">
+        <label>长度（cm）</label>
+        <input type="number" id="dim-l" value="30" min="1" max="300">
+      </div>
+      <div class="form-group">
+        <label>宽度（cm）</label>
+        <input type="number" id="dim-w" value="20" min="1" max="300">
+      </div>
+      <div class="form-group">
+        <label>高度（cm）</label>
+        <input type="number" id="dim-h" value="15" min="1" max="300">
+      </div>
+      <div class="form-group">
+        <label>保价金额（元，可填0）</label>
+        <input type="number" id="insure" value="0" min="0" max="100000">
+      </div>
+    </div>
+    <button class="calc-btn" onclick="calculate()">📦 估算运费</button>
+  </div>
+
+  <div class="result-section" id="result-section">
+    <div class="card">
+      <div class="card-title">📊 包裹信息</div>
+      <div class="info-grid">
+        <div class="info-box"><div class="info-val" id="r-weight">--</div><div class="info-name">计费重量(kg)</div></div>
+        <div class="info-box"><div class="info-val" id="r-vol">--</div><div class="info-name">体积重(kg)</div></div>
+        <div class="info-box"><div class="info-val" id="r-region">--</div><div class="info-name">寄件类型</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">💰 各快递估价对比</div>
+      <div class="company-cards" id="company-cards"></div>
+      <div style="margin-top:12px;font-size:.78rem;color:var(--muted);background:#fffbeb;padding:10px;border-radius:8px;line-height:1.7;">
+        ⚠️ 以上价格为估算参考，实际运费以快递公司官网/门店报价为准。价格受寄件网点、优惠活动等因素影响。
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 快递选择指南</div>
+    <div style="font-size:.85rem;line-height:1.9;display:flex;flex-direction:column;gap:6px;">
+      <div>📦 <strong>顺丰速运</strong> — 时效最快，适合急件、贵重物品，价格偏高</div>
+      <div>🔵 <strong>京东快递</strong> — 京东自营商品首选，速度快、服务好</div>
+      <div>📮 <strong>中通/韵达/申通</strong> — 电商大件常用，价格实惠，适合普通包裹</div>
+      <div>🟡 <strong>圆通速递</strong> — 覆盖面广，价格适中，电商寄件优选</div>
+      <div>🟢 <strong>极兔速递</strong> — 价格最低，适合价格敏感型寄件</div>
+      <div>📬 <strong>EMS邮政</strong> — 全国通达包括偏远，寄港澳台首选</div>
+    </div>
+  </div>
+  <div class="ad-bar">🚚 企业寄件优惠月卡 · 电商团购快递 · 物流合作欢迎联系</div>
+</div>
+<script>
+// Base prices: [首重价, 续重价/kg] per region type
+const COMPANIES = [
+  {name:'顺丰速运', icon:'📦', speed:'次日/隔日达',
+    prices:{same:[12,1],nearby:[18,3],national:[22,5],remote:[35,10]}},
+  {name:'京东快递', icon:'🔵', speed:'次日/隔日达',
+    prices:{same:[10,1],nearby:[15,3],national:[18,5],remote:[30,10]}},
+  {name:'中通快递', icon:'📮', speed:'2-4天',
+    prices:{same:[6,1],nearby:[8,2],national:[10,3],remote:[20,7]}},
+  {name:'圆通速递', icon:'🟡', speed:'2-4天',
+    prices:{same:[6,1],nearby:[8,2],national:[10,3],remote:[20,7]}},
+  {name:'韵达快递', icon:'🟠', speed:'2-4天',
+    prices:{same:[5.5,1],nearby:[7.5,2],national:[9.5,3],remote:[19,7]}},
+  {name:'申通快递', icon:'🔴', speed:'2-4天',
+    prices:{same:[5.5,1],nearby:[7.5,2],national:[9.5,3],remote:[19,7]}},
+  {name:'极兔速递', icon:'🐇', speed:'3-5天',
+    prices:{same:[5,0.8],nearby:[7,1.8],national:[8.5,2.5],remote:[18,6]}},
+  {name:'EMS邮政', icon:'📬', speed:'3-5天',
+    prices:{same:[11,1.5],nearby:[14,3],national:[20,6],remote:[25,8]}},
+];
+const REGION_NAMES={same:'同城',nearby:'省内',national:'全国',remote:'偏远地区'};
+
+function setSize(l,w,h,wt){
+  if(!l){document.getElementById('dim-l').value='';document.getElementById('dim-w').value='';document.getElementById('dim-h').value='';document.getElementById('weight').value='';}
+  else{
+    document.getElementById('dim-l').value=l;
+    document.getElementById('dim-w').value=w;
+    document.getElementById('dim-h').value=h;
+    document.getElementById('weight').value=wt;
+  }
+}
+
+function calculate(){
+  const region = document.getElementById('from-region').value;
+  const wt = parseFloat(document.getElementById('weight').value)||1;
+  const l = parseFloat(document.getElementById('dim-l').value)||0;
+  const w = parseFloat(document.getElementById('dim-w').value)||0;
+  const h = parseFloat(document.getElementById('dim-h').value)||0;
+  const insure = parseFloat(document.getElementById('insure').value)||0;
+
+  // Volume weight: L*W*H / 6000 (standard)
+  const volWt = l&&w&&h ? +(l*w*h/6000).toFixed(2) : 0;
+  const billWt = Math.max(wt, volWt);
+
+  document.getElementById('r-weight').textContent = billWt.toFixed(2)+'kg';
+  document.getElementById('r-vol').textContent = volWt?volWt+'kg':'未输入';
+  document.getElementById('r-region').textContent = REGION_NAMES[region];
+
+  const results = COMPANIES.map(c=>{
+    const [base, perKg] = c.prices[region];
+    const extra = Math.max(0, billWt-1);
+    let price = base + extra*perKg;
+    // Insurance fee
+    if(insure>1000) price += Math.ceil((insure-1000)/100)*0.5;
+    price = Math.round(price*10)/10;
+    return {...c, price};
+  }).sort((a,b)=>a.price-b.price);
+
+  const minPrice = results[0].price;
+  document.getElementById('company-cards').innerHTML = results.map((c,i)=>`
+    <div class="company-card ${i===0?'cheapest':''}">
+      <div class="company-icon">${c.icon}</div>
+      <div class="company-info">
+        <div class="company-name">${c.name}${i===0?'<span class="cheapest-badge">最低价</span>':''}</div>
+        <div class="company-speed">⏱ ${c.speed}${insure>0?` · 保价￥${insure}`:''}</div>
+      </div>
+      <div>
+        <div class="company-price ${i===0?'best-price':''}">¥${c.price}</div>
+        <div class="price-note">估算价格</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('result-section').classList.add('show');
+  document.getElementById('result-section').scrollIntoView({behavior:'smooth'});
+}
+</script>
+</body>
+</html>

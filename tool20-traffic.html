@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>流量话费预估 - 万能工具箱</title>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent: #10b981;
+  --accent2: #34d399;
+  --bg: #030d09;
+  --card: #0a1a12;
+  --card2: #0f2018;
+  --text: #e4faf0;
+  --muted: #5a8a72;
+  --border: #163028;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Noto Sans SC', sans-serif; min-height: 100vh; }
+
+.topbar { background: #060f0b; border-bottom: 1px solid var(--border); padding: 0 20px; height: 52px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; }
+.back-btn { color: var(--muted); text-decoration: none; font-size: 14px; transition: color .2s; }
+.back-btn:hover { color: var(--text); }
+.topbar-title { font-family: 'ZCOOL XiaoWei', serif; font-size: 17px; color: var(--accent2); }
+
+.hero { background: linear-gradient(135deg, #011a0d 0%, #030d09 70%); padding: 40px 20px 30px; text-align: center; border-bottom: 1px solid var(--border); }
+.hero-icon { font-size: 48px; margin-bottom: 12px; }
+.hero h1 { font-family: 'ZCOOL XiaoWei', serif; font-size: 26px; color: var(--accent2); margin-bottom: 8px; }
+.hero p { color: var(--muted); font-size: 14px; }
+
+.container { max-width: 680px; margin: 0 auto; padding: 24px 16px; }
+
+/* tabs */
+.tabs { display: flex; background: var(--card); border-radius: 12px; padding: 4px; margin-bottom: 22px; border: 1px solid var(--border); }
+.tab { flex: 1; padding: 10px; text-align: center; font-size: 14px; cursor: pointer; border-radius: 9px; transition: all .2s; color: var(--muted); }
+.tab.active { background: var(--accent); color: white; font-weight: 500; }
+
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px; margin-bottom: 18px; }
+.card-title { font-size: 15px; font-weight: 500; color: var(--accent2); margin-bottom: 18px; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+label { font-size: 13px; color: var(--muted); }
+input, select { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; font-size: 14px; color: var(--text); font-family: inherit; outline: none; transition: border-color .2s; width: 100%; }
+input:focus, select:focus { border-color: var(--accent); }
+
+/* usage sliders */
+.usage-item { margin-bottom: 18px; }
+.usage-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.usage-label { font-size: 14px; display: flex; align-items: center; gap: 8px; }
+.usage-val { font-size: 14px; font-weight: 600; color: var(--accent2); }
+.slider { width: 100%; accent-color: var(--accent); cursor: pointer; }
+
+.calc-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 500; cursor: pointer; font-family: inherit; transition: opacity .2s; }
+.calc-btn:hover { opacity: .9; }
+
+/* results */
+.result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.result-box { background: var(--card2); border-radius: 12px; padding: 16px; text-align: center; border: 1px solid var(--border); }
+.result-box.highlight { border-color: var(--accent); background: rgba(16,185,129,.08); }
+.result-val { font-size: 26px; font-weight: 700; color: var(--accent2); font-family: 'ZCOOL XiaoWei', serif; }
+.result-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* donut */
+.donut-wrap { display: flex; align-items: center; gap: 20px; }
+.donut-svg { flex-shrink: 0; }
+.donut-legend { flex: 1; }
+.legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; }
+.legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+
+/* usage warning */
+.warning-bar { padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-top: 12px; }
+.warn-ok { background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.3); color: var(--accent2); }
+.warn-mid { background: rgba(244,140,6,.1); border: 1px solid rgba(244,140,6,.3); color: #fbbf24; }
+.warn-high { background: rgba(232,93,4,.1); border: 1px solid rgba(232,93,4,.3); color: #fb923c; }
+
+/* plan comparison */
+.plan-card { background: var(--card2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.plan-card.recommended { border-color: var(--accent); background: rgba(16,185,129,.06); }
+.plan-name { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+.plan-detail { font-size: 12px; color: var(--muted); }
+.plan-price { font-size: 20px; font-weight: 700; color: var(--accent2); }
+.plan-badge { font-size: 11px; background: var(--accent); color: white; padding: 2px 8px; border-radius: 4px; margin-left: 8px; }
+
+.section { display: none; }
+.section.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back-btn" href="index.html">← 返回</a>
+  <span class="topbar-title">📱 流量话费预估</span>
+</div>
+
+<div class="hero">
+  <div class="hero-icon">📶</div>
+  <h1>流量话费预估</h1>
+  <p>套餐对比 · 流量估算 · 超额预警</p>
+</div>
+
+<div class="container">
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('estimate')">流量估算</div>
+    <div class="tab" onclick="switchTab('plan')">套餐对比</div>
+    <div class="tab" onclick="switchTab('remaining')">剩余预测</div>
+  </div>
+
+  <!-- Tab 1: 流量估算 -->
+  <div id="tab-estimate" class="section active">
+    <div class="card">
+      <div class="card-title">📱 日常使用习惯</div>
+
+      <div class="usage-item">
+        <div class="usage-header">
+          <span class="usage-label">🎬 刷短视频 (抖音/快手)</span>
+          <span class="usage-val" id="v-val">1 小时/天</span>
+        </div>
+        <input type="range" class="slider" id="video-slider" min="0" max="6" step="0.5" value="1" oninput="updateSlider('video-slider','v-val',v=>v+' 小时/天')">
+      </div>
+
+      <div class="usage-item">
+        <div class="usage-header">
+          <span class="usage-label">📺 在线视频 (高清)</span>
+          <span class="usage-val" id="hd-val">0.5 小时/天</span>
+        </div>
+        <input type="range" class="slider" id="hd-slider" min="0" max="4" step="0.5" value="0.5" oninput="updateSlider('hd-slider','hd-val',v=>v+' 小时/天')">
+      </div>
+
+      <div class="usage-item">
+        <div class="usage-header">
+          <span class="usage-label">🎵 音乐/播客</span>
+          <span class="usage-val" id="music-val">1 小时/天</span>
+        </div>
+        <input type="range" class="slider" id="music-slider" min="0" max="8" step="0.5" value="1" oninput="updateSlider('music-slider','music-val',v=>v+' 小时/天')">
+      </div>
+
+      <div class="usage-item">
+        <div class="usage-header">
+          <span class="usage-label">💬 社交/微信/微博</span>
+          <span class="usage-val" id="social-val">2 小时/天</span>
+        </div>
+        <input type="range" class="slider" id="social-slider" min="0" max="8" step="0.5" value="2" oninput="updateSlider('social-slider','social-val',v=>v+' 小时/天')">
+      </div>
+
+      <div class="usage-item">
+        <div class="usage-header">
+          <span class="usage-label">🌐 网页/新闻浏览</span>
+          <span class="usage-val" id="web-val">1 小时/天</span>
+        </div>
+        <input type="range" class="slider" id="web-slider" min="0" max="6" step="0.5" value="1" oninput="updateSlider('web-slider','web-val',v=>v+' 小时/天')">
+      </div>
+
+      <div class="usage-item">
+        <div class="usage-header">
+          <span class="usage-label">🎮 手游</span>
+          <span class="usage-val" id="game-val">0.5 小时/天</span>
+        </div>
+        <input type="range" class="slider" id="game-slider" min="0" max="6" step="0.5" value="0.5" oninput="updateSlider('game-slider','game-val',v=>v+' 小时/天')">
+      </div>
+
+      <div class="form-row" style="margin-top:6px;">
+        <div class="form-group">
+          <label>Wi-Fi 使用比例</label>
+          <select id="wifi-ratio">
+            <option value="0.2">80% 使用移动数据</option>
+            <option value="0.4">60% 使用移动数据</option>
+            <option value="0.6" selected>40% 使用移动数据</option>
+            <option value="0.8">20% 使用移动数据</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>统计周期</label>
+          <select id="period">
+            <option value="30">一个月 (30天)</option>
+            <option value="7">一周 (7天)</option>
+            <option value="1">一天</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="calc-btn" onclick="calcUsage()" style="margin-top:8px;">📊 估算流量用量</button>
+    </div>
+
+    <div id="estimate-result" style="display:none;">
+      <div class="card">
+        <div class="card-title">📈 流量使用分析</div>
+        <div class="result-grid">
+          <div class="result-box highlight">
+            <div class="result-val" id="total-traffic">-</div>
+            <div class="result-label" id="traffic-period-label">月用量 (GB)</div>
+          </div>
+          <div class="result-box">
+            <div class="result-val" id="daily-traffic">-</div>
+            <div class="result-label">日均流量 (MB)</div>
+          </div>
+        </div>
+
+        <div class="donut-wrap">
+          <svg class="donut-svg" viewBox="0 0 120 120" width="120" height="120" id="usage-donut"></svg>
+          <div class="donut-legend" id="usage-legend"></div>
+        </div>
+
+        <div id="usage-warning" class="warning-bar warn-ok" style="margin-top:14px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2: 套餐对比 -->
+  <div id="tab-plan" class="section">
+    <div class="card">
+      <div class="card-title">⚙️ 你的需求</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>每月需要流量</label>
+          <input type="number" id="need-traffic" placeholder="例如 20" min="0" value="20">
+          <span style="font-size:12px;color:var(--muted);margin-top:3px;">GB</span>
+        </div>
+        <div class="form-group">
+          <label>每月通话分钟</label>
+          <input type="number" id="need-call" placeholder="例如 200" min="0" value="200">
+          <span style="font-size:12px;color:var(--muted);margin-top:3px;">分钟</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>运营商偏好</label>
+          <select id="carrier">
+            <option value="all">不限</option>
+            <option value="cm">中国移动</option>
+            <option value="cu">中国联通</option>
+            <option value="ct">中国电信</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>预算上限</label>
+          <input type="number" id="budget-limit" placeholder="例如 100" min="0" value="100">
+          <span style="font-size:12px;color:var(--muted);margin-top:3px;">元/月</span>
+        </div>
+      </div>
+      <button class="calc-btn" onclick="comparePlans()">🔍 筛选推荐套餐</button>
+    </div>
+
+    <div id="plan-result" style="display:none;">
+      <div id="plan-list"></div>
+    </div>
+  </div>
+
+  <!-- Tab 3: 剩余预测 -->
+  <div id="tab-remaining" class="section">
+    <div class="card">
+      <div class="card-title">📅 本月流量预测</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>套餐总流量 (GB)</label>
+          <input type="number" id="pkg-total" placeholder="例如 30" min="0" value="30">
+        </div>
+        <div class="form-group">
+          <label>已用流量 (GB)</label>
+          <input type="number" id="pkg-used" placeholder="例如 12" min="0" step="0.1">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>当前日期 (月中第几天)</label>
+          <input type="number" id="current-day" placeholder="例如 15" min="1" max="31" value="15">
+        </div>
+        <div class="form-group">
+          <label>超出流量单价</label>
+          <input type="number" id="overage-price" placeholder="0.1" step="0.01" min="0" value="0.1">
+          <span style="font-size:12px;color:var(--muted);margin-top:3px;">元/MB</span>
+        </div>
+      </div>
+      <button class="calc-btn" onclick="predictRemaining()">🔮 预测月末情况</button>
+    </div>
+
+    <div id="remain-result" style="display:none;">
+      <div class="card">
+        <div class="card-title">📊 预测结果</div>
+        <div style="position:relative;height:24px;background:var(--card2);border-radius:12px;overflow:hidden;margin-bottom:16px;">
+          <div id="progress-used" style="height:100%;border-radius:12px;background:var(--accent);transition:width .6s;"></div>
+          <div id="progress-text" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;"></div>
+        </div>
+        <div class="result-grid">
+          <div class="result-box highlight">
+            <div class="result-val" id="r-remaining">-</div>
+            <div class="result-label">剩余流量 (GB)</div>
+          </div>
+          <div class="result-box">
+            <div class="result-val" id="r-daily-budget">-</div>
+            <div class="result-label">日均可用 (MB)</div>
+          </div>
+          <div class="result-box">
+            <div class="result-val" id="r-predict-usage">-</div>
+            <div class="result-label">预计月末用量 (GB)</div>
+          </div>
+          <div class="result-box">
+            <div class="result-val" id="r-overage-cost">-</div>
+            <div class="result-label">预计超额费用 (元)</div>
+          </div>
+        </div>
+        <div id="remain-warning" class="warning-bar"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Usage rate per hour (MB)
+const usageRates = {
+  video: 750,   // 短视频 ~750MB/h
+  hd: 1500,     // 高清视频 ~1.5GB/h
+  music: 60,    // 音乐 ~60MB/h
+  social: 150,  // 社交 ~150MB/h
+  web: 80,      // 网页 ~80MB/h
+  game: 50      // 手游 ~50MB/h
+};
+
+const colors = ['#10b981','#0ea5e9','#f48c06','#7c3aed','#e85d04','#ec4899'];
+const labels = ['短视频','高清视频','音乐','社交','网页','游戏'];
+
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach((el, i) => el.classList.toggle('active', ['estimate','plan','remaining'][i] === t));
+  document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + t).classList.add('active');
+}
+
+function updateSlider(sliderId, valId, formatter) {
+  const v = document.getElementById(sliderId).value;
+  document.getElementById(valId).textContent = formatter(parseFloat(v));
+}
+
+function calcUsage() {
+  const video = parseFloat(document.getElementById('video-slider').value);
+  const hd = parseFloat(document.getElementById('hd-slider').value);
+  const music = parseFloat(document.getElementById('music-slider').value);
+  const social = parseFloat(document.getElementById('social-slider').value);
+  const web = parseFloat(document.getElementById('web-slider').value);
+  const game = parseFloat(document.getElementById('game-slider').value);
+  const wifiRatio = parseFloat(document.getElementById('wifi-ratio').value);
+  const period = parseInt(document.getElementById('period').value);
+
+  const dailyUsages = [
+    video * usageRates.video,
+    hd * usageRates.hd,
+    music * usageRates.music,
+    social * usageRates.social,
+    web * usageRates.web,
+    game * usageRates.game
+  ];
+  const totalDailyMB = dailyUsages.reduce((a, b) => a + b, 0) * wifiRatio;
+  const periodMB = totalDailyMB * period;
+  const periodGB = (periodMB / 1024).toFixed(2);
+
+  const periodLabels = { 30: '月', 7: '周', 1: '日' };
+
+  document.getElementById('total-traffic').textContent = period === 1 ? (totalDailyMB * wifiRatio).toFixed(0) + 'MB' : periodGB + 'GB';
+  document.getElementById('daily-traffic').textContent = (totalDailyMB).toFixed(0);
+  document.getElementById('traffic-period-label').textContent = periodLabels[period] + '用量 (GB)';
+
+  // Donut chart
+  const total = dailyUsages.reduce((a, b) => a + b, 0);
+  let cumAngle = -90;
+  let donutPaths = '';
+  let legendHtml = '';
+  dailyUsages.forEach((u, i) => {
+    if (u === 0) return;
+    const pct = u / total;
+    const angle = pct * 360;
+    const r = 40, cx = 60, cy = 60, strokeW = 18;
+    const startRad = cumAngle * Math.PI / 180;
+    const endRad = (cumAngle + angle) * Math.PI / 180;
+    const x1 = cx + r * Math.cos(startRad), y1 = cy + r * Math.sin(startRad);
+    const x2 = cx + r * Math.cos(endRad), y2 = cy + r * Math.sin(endRad);
+    const largeArc = angle > 180 ? 1 : 0;
+    donutPaths += `<path d="M${x1},${y1} A${r},${r} 0 ${largeArc},1 ${x2},${y2}" fill="none" stroke="${colors[i]}" stroke-width="${strokeW}"/>`;
+    legendHtml += `<div class="legend-item"><div class="legend-dot" style="background:${colors[i]}"></div>${labels[i]}: ${(u/1024).toFixed(1)}GB/天</div>`;
+    cumAngle += angle;
+  });
+  document.getElementById('usage-donut').innerHTML = donutPaths + `<text x="60" y="64" text-anchor="middle" fill="#e4faf0" font-size="11" font-family="Noto Sans SC">${(totalDailyMB/1024).toFixed(2)}GB/天</text>`;
+  document.getElementById('usage-legend').innerHTML = legendHtml;
+
+  // Warning
+  const monthlyGB = totalDailyMB * 30 / 1024;
+  let warnClass, warnText;
+  if (monthlyGB < 10) { warnClass = 'warn-ok'; warnText = `✅ 月均用量约 ${monthlyGB.toFixed(1)}GB，10GB以内套餐即可满足`; }
+  else if (monthlyGB < 30) { warnClass = 'warn-mid'; warnText = `📊 月均用量约 ${monthlyGB.toFixed(1)}GB，建议选择20-30GB套餐`; }
+  else { warnClass = 'warn-high'; warnText = `⚠️ 月均用量约 ${monthlyGB.toFixed(1)}GB，建议选择大流量或无限流量套餐`; }
+  document.getElementById('usage-warning').className = 'warning-bar ' + warnClass;
+  document.getElementById('usage-warning').textContent = warnText;
+
+  document.getElementById('estimate-result').style.display = 'block';
+}
+
+function comparePlans() {
+  const needTraffic = parseFloat(document.getElementById('need-traffic').value) || 20;
+  const needCall = parseFloat(document.getElementById('need-call').value) || 200;
+  const budget = parseFloat(document.getElementById('budget-limit').value) || 100;
+  const carrier = document.getElementById('carrier').value;
+
+  const plans = [
+    { name: '移动8元保号套餐', carrier: 'cm', traffic: 0, call: 0, price: 8, note: '仅保号，无流量' },
+    { name: '联通19元套餐', carrier: 'cu', traffic: 3, call: 100, price: 19, note: '3GB + 100分钟' },
+    { name: '电信29元套餐', carrier: 'ct', traffic: 10, call: 100, price: 29, note: '10GB + 100分钟' },
+    { name: '移动39元套餐', carrier: 'cm', traffic: 20, call: 200, price: 39, note: '20GB + 200分钟' },
+    { name: '联通59元套餐', carrier: 'cu', traffic: 30, call: 500, price: 59, note: '30GB + 500分钟' },
+    { name: '电信69元套餐', carrier: 'ct', traffic: 40, call: 600, price: 69, note: '40GB + 600分钟' },
+    { name: '移动88元套餐', carrier: 'cm', traffic: 60, call: 500, price: 88, note: '60GB + 500分钟' },
+    { name: '联通99元套餐', carrier: 'cu', traffic: 80, call: 1000, price: 99, note: '80GB + 1000分钟' },
+    { name: '电信129元套餐', carrier: 'ct', traffic: 100, call: 1000, price: 129, note: '100GB + 1000分钟' },
+    { name: '5G无限流量套餐', carrier: 'all', traffic: 999, call: 1000, price: 158, note: '无限流量(限速后不限量)' },
+  ];
+
+  let filtered = plans.filter(p =>
+    (carrier === 'all' || p.carrier === carrier || p.carrier === 'all') &&
+    p.price <= budget &&
+    p.traffic >= needTraffic &&
+    p.call >= needCall
+  );
+  if (filtered.length === 0) filtered = plans.filter(p => p.price <= budget + 30).slice(0, 3);
+
+  filtered.sort((a, b) => (a.price / Math.max(a.traffic, 1)) - (b.price / Math.max(b.traffic, 1)));
+
+  const carrierNames = { cm: '📱 中国移动', cu: '💜 中国联通', ct: '🔵 中国电信', all: '🌐 通用' };
+  document.getElementById('plan-list').innerHTML = filtered.map((p, i) => `
+    <div class="plan-card ${i === 0 ? 'recommended' : ''}">
+      <div>
+        <div class="plan-name">${p.name} ${i === 0 ? '<span class="plan-badge">推荐</span>' : ''}</div>
+        <div class="plan-detail">${carrierNames[p.carrier]} · ${p.note}</div>
+        <div class="plan-detail" style="margin-top:3px">流量单价 ¥${p.traffic > 0 ? (p.price/p.traffic).toFixed(2) : '—'}/GB</div>
+      </div>
+      <div class="plan-price">¥${p.price}<span style="font-size:13px;color:var(--muted)">/月</span></div>
+    </div>`).join('') || '<div style="text-align:center;color:var(--muted);padding:24px">暂无符合条件的套餐，建议放宽预算</div>';
+
+  document.getElementById('plan-result').style.display = 'block';
+}
+
+function predictRemaining() {
+  const total = parseFloat(document.getElementById('pkg-total').value) || 30;
+  const used = parseFloat(document.getElementById('pkg-used').value) || 0;
+  const day = parseInt(document.getElementById('current-day').value) || 15;
+  const overagePrice = parseFloat(document.getElementById('overage-price').value) || 0.1;
+
+  const remaining = total - used;
+  const daysLeft = 30 - day + 1;
+  const dailyBudgetMB = (remaining * 1024 / daysLeft).toFixed(0);
+  const dailyUsedRate = (used / day); // GB per day
+  const predictedTotal = (used + dailyUsedRate * daysLeft).toFixed(2);
+  const overage = Math.max(0, parseFloat(predictedTotal) - total);
+  const overageCost = (overage * 1024 * overagePrice).toFixed(1);
+
+  document.getElementById('r-remaining').textContent = remaining.toFixed(1) + 'GB';
+  document.getElementById('r-daily-budget').textContent = dailyBudgetMB + 'MB';
+  document.getElementById('r-predict-usage').textContent = predictedTotal + 'GB';
+  document.getElementById('r-overage-cost').textContent = overage > 0 ? '¥' + overageCost : '¥0';
+
+  const pct = Math.min((used / total * 100), 100);
+  const predictPct = Math.min((parseFloat(predictedTotal) / total * 100), 100);
+  document.getElementById('progress-used').style.width = pct + '%';
+  document.getElementById('progress-used').style.background = pct > 85 ? '#e85d04' : pct > 60 ? '#f48c06' : '#10b981';
+  document.getElementById('progress-text').textContent = pct.toFixed(0) + '%';
+
+  let warnClass, warnText;
+  if (overage > 0) { warnClass = 'warn-high'; warnText = `⚠️ 按当前速度，月末将超出 ${overage.toFixed(1)}GB，预计产生 ¥${overageCost} 超额费用`; }
+  else if (remaining / total < 0.15) { warnClass = 'warn-mid'; warnText = `📊 流量剩余不足15%，建议控制使用或购买加油包`; }
+  else { warnClass = 'warn-ok'; warnText = `✅ 流量充裕，日均可用 ${dailyBudgetMB}MB，月末预计不会超额`; }
+  document.getElementById('remain-warning').className = 'warning-bar ' + warnClass;
+  document.getElementById('remain-warning').textContent = warnText;
+
+  document.getElementById('remain-result').style.display = 'block';
+}
+</script>
+</body>
+</html>
