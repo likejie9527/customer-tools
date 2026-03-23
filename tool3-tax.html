@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>个人所得税计算器</title>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f0fdf4;--card:#fff;--ink:#052e16;--muted:#6b7280;--accent:#18a87a;--border:#d1fae5;--red:#dc2626;--blue:#2a6fdb;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+.topbar{background:#052e16;color:#fff;padding:0 20px;height:56px;display:flex;align-items:center;gap:16px;}
+.topbar a{color:#6ee7b7;text-decoration:none;font-size:.85rem;}
+.topbar a:hover{color:#fff;}
+.topbar-title{font-family:'ZCOOL XiaoWei',serif;font-size:1.1rem;color:#fff;}
+.container{max-width:820px;margin:0 auto;padding:24px 16px 60px;}
+.page-title{text-align:center;padding:28px 0 24px;}
+.page-title h1{font-family:'ZCOOL XiaoWei',serif;font-size:2rem;letter-spacing:2px;}
+.page-title h1 span{color:var(--accent);}
+.page-title p{color:var(--muted);font-size:.9rem;margin-top:6px;}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:24px;margin-bottom:18px;}
+.card-title{font-size:.95rem;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:480px){.form-grid{grid-template-columns:1fr;}}
+.form-group label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:5px;font-weight:500;}
+.form-group input,.form-group select{
+  width:100%;padding:11px 14px;border:1.5px solid #d1d5db;border-radius:10px;
+  font-size:.95rem;font-family:'Noto Sans SC',sans-serif;background:#fff;color:var(--ink);
+  outline:none;transition:border-color .2s;
+}
+.form-group input:focus,.form-group select:focus{border-color:var(--accent);}
+.input-unit{position:relative;}
+.input-unit input{padding-right:40px;}
+.input-unit .unit{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.82rem;}
+
+.section-label{
+  font-size:.82rem;font-weight:700;color:var(--accent);
+  letter-spacing:1px;margin:18px 0 12px;
+  padding-bottom:8px;border-bottom:1px solid var(--border);
+}
+
+/* DEDUCTIONS */
+.deduction-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+@media(max-width:600px){.deduction-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:380px){.deduction-grid{grid-template-columns:1fr;}}
+.ded-item{background:var(--bg);border-radius:10px;padding:12px;}
+.ded-item label{font-size:.75rem;color:var(--muted);display:block;margin-bottom:5px;}
+.ded-item input{width:100%;border:1px solid #d1d5db;border-radius:6px;padding:7px 10px;font-size:.9rem;font-family:'Noto Sans SC',sans-serif;outline:none;}
+.ded-item input:focus{border-color:var(--accent);}
+
+.calc-btn{
+  width:100%;padding:15px;margin-top:4px;
+  background:var(--accent);color:#fff;border:none;border-radius:12px;
+  font-size:1rem;font-weight:700;font-family:'Noto Sans SC',sans-serif;
+  cursor:pointer;transition:all .2s;letter-spacing:1px;
+}
+.calc-btn:hover{background:#129468;transform:translateY(-1px);box-shadow:0 6px 20px rgba(24,168,122,.35);}
+
+/* RESULT */
+.result-section{display:none;}
+.result-section.show{display:block;animation:fadeUp .4s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+
+.pay-hero{
+  background:linear-gradient(135deg,#ecfdf5,#d1fae5);
+  border:2px solid var(--accent);border-radius:16px;
+  padding:24px;text-align:center;margin-bottom:20px;
+}
+.pay-amount{font-family:'ZCOOL XiaoWei',serif;font-size:3.2rem;color:var(--accent);line-height:1;}
+.pay-label{font-size:.85rem;color:var(--muted);margin-top:6px;}
+
+.breakdown-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+@media(max-width:480px){.breakdown-grid{grid-template-columns:1fr 1fr;}}
+.bk-item{background:var(--bg);border-radius:12px;padding:14px;text-align:center;}
+.bk-val{font-family:'ZCOOL XiaoWei',serif;font-size:1.4rem;}
+.bk-name{font-size:.72rem;color:var(--muted);margin-top:3px;}
+.red{color:var(--red);}
+.green{color:var(--accent);}
+.blue{color:var(--blue);}
+
+/* TAX BRACKET */
+.bracket-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+.bracket-table th{background:var(--bg);padding:9px 12px;text-align:center;color:var(--muted);font-weight:600;font-size:.78rem;}
+.bracket-table td{padding:9px 12px;text-align:center;border-bottom:1px solid var(--border);}
+.bracket-table tr:last-child td{border:none;}
+.active-bracket{background:color-mix(in srgb,var(--accent) 10%,transparent)!important;font-weight:700;}
+.active-bracket td{color:var(--accent);}
+
+/* BONUS */
+.bonus-compare{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;}
+@media(max-width:480px){.bonus-compare{grid-template-columns:1fr;}}
+.compare-box{border-radius:12px;padding:18px;text-align:center;}
+.compare-box.a{background:#eff6ff;border:1px solid #93c5fd;}
+.compare-box.b{background:#f0fdf4;border:1px solid #86efac;}
+.compare-box .label{font-size:.8rem;color:var(--muted);margin-bottom:8px;}
+.compare-box .val{font-family:'ZCOOL XiaoWei',serif;font-size:1.8rem;}
+.compare-box .tax{font-size:.82rem;margin-top:4px;color:var(--muted);}
+.winner-badge{background:var(--accent);color:#fff;font-size:.7rem;padding:2px 8px;border-radius:4px;display:inline-block;margin-top:6px;}
+
+/* INCOME BREAKDOWN BAR */
+.income-bar{height:24px;border-radius:12px;overflow:hidden;display:flex;margin:16px 0 8px;}
+.bar-seg{height:100%;transition:width .6s ease;}
+.bar-legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.78rem;}
+.bar-legend-item{display:flex;align-items:center;gap:5px;}
+.legend-dot{width:10px;height:10px;border-radius:3px;}
+
+.copy-btn{width:100%;padding:11px;margin-top:12px;background:transparent;border:1.5px solid var(--border);border-radius:10px;color:var(--muted);font-size:.85rem;font-family:'Noto Sans SC',sans-serif;cursor:pointer;transition:all .2s;}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent);}
+.ad-bar{background:#f0fff4;border:1px dashed #86efac;border-radius:10px;padding:12px;text-align:center;color:#166534;font-size:.8rem;margin-bottom:16px;}
+.tip{font-size:.8rem;color:var(--muted);margin-top:8px;line-height:1.7;background:var(--bg);padding:12px;border-radius:8px;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="index.html">← 返回首页</a>
+  <span style="color:#2d6a4f">/</span>
+  <span class="topbar-title">💰 个人所得税计算器</span>
+</div>
+
+<div class="container">
+  <div class="page-title">
+    <h1>个人所得税<span>精算</span>器</h1>
+    <p>2024年最新税率 · 五险一金 · 专项附加扣除 · 年终奖对比</p>
+  </div>
+
+  <div class="ad-bar">📢 广告位 · 薪资优化 / 财税咨询 欢迎合作</div>
+
+  <div class="card">
+    <div class="card-title">💼 月薪与五险一金</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>税前月薪（元）</label>
+        <div class="input-unit">
+          <input type="number" id="salary" placeholder="15000" value="15000" min="0">
+          <span class="unit">元</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>所在城市</label>
+        <select id="city" onchange="updateSocial()">
+          <option value="beijing">北京</option>
+          <option value="shanghai">上海</option>
+          <option value="shenzhen">深圳</option>
+          <option value="guangzhou">广州</option>
+          <option value="other" selected>其他城市</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-label">五险一金（个人缴纳比例）</div>
+    <div class="deduction-grid">
+      <div class="ded-item">
+        <label>养老保险 (%)</label>
+        <input type="number" id="pension" value="8" step="0.5">
+      </div>
+      <div class="ded-item">
+        <label>医疗保险 (%)</label>
+        <input type="number" id="medical" value="2" step="0.5">
+      </div>
+      <div class="ded-item">
+        <label>失业保险 (%)</label>
+        <input type="number" id="unemploy" value="0.5" step="0.5">
+      </div>
+      <div class="ded-item">
+        <label>住房公积金 (%)</label>
+        <input type="number" id="fund" value="12" step="1">
+      </div>
+      <div class="ded-item">
+        <label>工伤/生育 (%)</label>
+        <input type="number" id="injury" value="0" step="0.5">
+      </div>
+      <div class="ded-item">
+        <label>其他代扣（元）</label>
+        <input type="number" id="other-ded" value="0" step="100">
+      </div>
+    </div>
+
+    <div class="section-label">专项附加扣除（元/月）</div>
+    <div class="deduction-grid">
+      <div class="ded-item">
+        <label>子女教育</label>
+        <input type="number" id="ded-child" value="0" step="500" placeholder="1000/子">
+      </div>
+      <div class="ded-item">
+        <label>继续教育</label>
+        <input type="number" id="ded-edu" value="0" step="100" placeholder="400">
+      </div>
+      <div class="ded-item">
+        <label>大病医疗</label>
+        <input type="number" id="ded-medical" value="0" step="100">
+      </div>
+      <div class="ded-item">
+        <label>住房贷款利息</label>
+        <input type="number" id="ded-mortgage" value="0" step="100" placeholder="1000">
+      </div>
+      <div class="ded-item">
+        <label>住房租金</label>
+        <input type="number" id="ded-rent" value="0" step="100" placeholder="800-1500">
+      </div>
+      <div class="ded-item">
+        <label>赡养老人</label>
+        <input type="number" id="ded-elderly" value="0" step="500" placeholder="2000">
+      </div>
+    </div>
+
+    <button class="calc-btn" onclick="calculate()">立即计算税后工资</button>
+  </div>
+
+  <!-- YEAR-END BONUS -->
+  <div class="card">
+    <div class="card-title">🎁 年终奖对比计算（可选）</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>年终奖金额（元）</label>
+        <div class="input-unit">
+          <input type="number" id="bonus" placeholder="30000">
+          <span class="unit">元</span>
+        </div>
+      </div>
+      <div class="form-group" style="display:flex;align-items:flex-end;">
+        <button class="calc-btn" style="margin:0;" onclick="calcBonus()">对比两种方式</button>
+      </div>
+    </div>
+    <div class="tip">💡 单独计税：年终奖除以12找税率，单独按月计算个税<br>合并计税：年终奖并入当年综合所得，按年度税率计算</div>
+    <div id="bonus-result" style="margin-top:0;"></div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result-section" id="result-section">
+    <div class="card">
+      <div class="card-title">📊 工资明细</div>
+      <div class="pay-hero">
+        <div class="pay-amount" id="net-pay">--</div>
+        <div class="pay-label">实发工资（税后到手）</div>
+      </div>
+
+      <div class="income-bar" id="income-bar"></div>
+      <div class="bar-legend" id="bar-legend"></div>
+
+      <div class="breakdown-grid" style="margin-top:16px;">
+        <div class="bk-item"><div class="bk-val" id="bd-gross">--</div><div class="bk-name">税前月薪</div></div>
+        <div class="bk-item"><div class="bk-val red" id="bd-social">--</div><div class="bk-name">五险一金</div></div>
+        <div class="bk-item"><div class="bk-val red" id="bd-deduct">--</div><div class="bk-name">专项扣除合计</div></div>
+        <div class="bk-item"><div class="bk-val blue" id="bd-taxable">--</div><div class="bk-name">应纳税所得额</div></div>
+        <div class="bk-item"><div class="bk-val red" id="bd-tax">--</div><div class="bk-name">个人所得税</div></div>
+        <div class="bk-item"><div class="bk-val green" id="bd-net">--</div><div class="bk-name">实发工资</div></div>
+      </div>
+
+      <div class="card-title" style="margin-top:4px;">📈 税率档位（当前命中高亮）</div>
+      <table class="bracket-table">
+        <thead><tr><th>全年应纳税所得额</th><th>税率</th><th>速算扣除数</th></tr></thead>
+        <tbody id="bracket-tbody"></tbody>
+      </table>
+
+      <button class="copy-btn" onclick="copyResult()">📋 复制工资明细</button>
+    </div>
+  </div>
+
+  <div class="ad-bar">💼 薪资结构优化咨询 · 个税筹划服务 · 欢迎了解</div>
+</div>
+
+<script>
+const BRACKETS = [
+  [36000, 0.03, 0, '不超过3万6千元'],
+  [144000, 0.1, 2520, '3.6万~14.4万'],
+  [300000, 0.2, 16920, '14.4万~30万'],
+  [420000, 0.25, 31920, '30万~42万'],
+  [660000, 0.3, 52920, '42万~66万'],
+  [960000, 0.35, 85920, '66万~96万'],
+  [Infinity, 0.45, 181920, '超过96万'],
+];
+
+function getTax(yearlyTaxable) {
+  for (const [limit, rate, deduct] of BRACKETS) {
+    if (yearlyTaxable <= limit) {
+      return yearlyTaxable * rate - deduct;
+    }
+  }
+  return 0;
+}
+
+function getBracket(yearlyTaxable) {
+  for (let i = 0; i < BRACKETS.length; i++) {
+    if (yearlyTaxable <= BRACKETS[i][0]) return i;
+  }
+  return BRACKETS.length - 1;
+}
+
+let lastData = null;
+
+function updateSocial() {
+  const rates = {
+    beijing: [8, 2, 0.5, 12],
+    shanghai: [8, 2, 1, 7],
+    shenzhen: [8, 2, 0.5, 12],
+    guangzhou: [8, 2, 0.5, 12],
+    other: [8, 2, 0.5, 12],
+  };
+  const city = document.getElementById('city').value;
+  const r = rates[city];
+  document.getElementById('pension').value = r[0];
+  document.getElementById('medical').value = r[1];
+  document.getElementById('unemploy').value = r[2];
+  document.getElementById('fund').value = r[3];
+}
+
+function calculate() {
+  const gross = parseFloat(document.getElementById('salary').value) || 0;
+  const pension = parseFloat(document.getElementById('pension').value)/100;
+  const medical = parseFloat(document.getElementById('medical').value)/100;
+  const unemploy = parseFloat(document.getElementById('unemploy').value)/100;
+  const fund = parseFloat(document.getElementById('fund').value)/100;
+  const injury = parseFloat(document.getElementById('injury').value)/100;
+  const otherDed = parseFloat(document.getElementById('other-ded').value) || 0;
+
+  const socialTotal = gross * (pension + medical + unemploy + fund + injury);
+  const extraDeds = ['ded-child','ded-edu','ded-medical','ded-mortgage','ded-rent','ded-elderly']
+    .reduce((s,id) => s + (parseFloat(document.getElementById(id).value)||0), 0);
+
+  const THRESHOLD = 5000;
+  const monthlyTaxable = Math.max(0, gross - socialTotal - THRESHOLD - extraDeds - otherDed);
+  const yearlyTaxable = monthlyTaxable * 12;
+  const yearlyTax = Math.max(0, getTax(yearlyTaxable));
+  const monthlyTax = yearlyTax / 12;
+  const net = gross - socialTotal - monthlyTax - otherDed;
+
+  // Bracket highlight
+  const activeBracket = getBracket(yearlyTaxable);
+  const tbody = document.getElementById('bracket-tbody');
+  tbody.innerHTML = BRACKETS.map(([l, rate, deduct, label], i) => `
+    <tr class="${i === activeBracket ? 'active-bracket' : ''}">
+      <td>${label}</td>
+      <td>${(rate*100).toFixed(0)}%</td>
+      <td>${deduct.toLocaleString()} 元</td>
+    </tr>`).join('');
+
+  document.getElementById('bd-gross').textContent = gross.toLocaleString('zh',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('bd-social').textContent = '-' + socialTotal.toLocaleString('zh',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('bd-deduct').textContent = '-' + (extraDeds + THRESHOLD).toLocaleString('zh',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('bd-taxable').textContent = monthlyTaxable.toLocaleString('zh',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('bd-tax').textContent = '-' + monthlyTax.toLocaleString('zh',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('bd-net').textContent = net.toLocaleString('zh',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('net-pay').textContent = '¥' + net.toLocaleString('zh',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  // Bar
+  const segs = [
+    { label:'实发工资', val: net, color:'#18a87a' },
+    { label:'五险一金', val: socialTotal, color:'#60a5fa' },
+    { label:'个人所得税', val: monthlyTax, color:'#f87171' },
+    { label:'其他扣除', val: otherDed, color:'#d1d5db' },
+  ];
+  const barEl = document.getElementById('income-bar');
+  barEl.innerHTML = segs.map(s => `<div class="bar-seg" style="width:${(s.val/gross*100).toFixed(1)}%;background:${s.color}"></div>`).join('');
+  document.getElementById('bar-legend').innerHTML = segs.map(s => `<div class="bar-legend-item"><div class="legend-dot" style="background:${s.color}"></div>${s.label} ${(s.val/gross*100).toFixed(1)}%</div>`).join('');
+
+  lastData = { gross, socialTotal, monthlyTax, net, monthlyTaxable, yearlyTaxable };
+  document.getElementById('result-section').classList.add('show');
+}
+
+function calcBonus() {
+  const bonus = parseFloat(document.getElementById('bonus').value);
+  if (!bonus) { alert('请输入年终奖金额'); return; }
+  if (!lastData) { calculate(); }
+  if (!lastData) return;
+
+  // Method A: Separate tax
+  const monthlyBonus = bonus / 12;
+  let bracketA;
+  for (const [l, rate, deduct] of BRACKETS) {
+    if (monthlyBonus * 12 <= l) { bracketA = [rate, deduct]; break; }
+  }
+  const taxA = Math.max(0, bonus * bracketA[0] - bracketA[1]);
+
+  // Method B: Combined (simplified: add to yearly income)
+  const yearlyGross = lastData.gross * 12 + bonus;
+  const yearlySocial = lastData.socialTotal * 12;
+  const yearlyTaxableB = Math.max(0, yearlyGross - yearlySocial - 5000*12);
+  const taxB_total = Math.max(0, getTax(yearlyTaxableB));
+  const taxB_noBonus = Math.max(0, getTax(lastData.yearlyTaxable * 12 / (lastData.monthlyTaxable || 1) * lastData.monthlyTaxable));
+  const taxBonusB = taxB_total - (lastData.yearlyTaxable > 0 ? getTax(lastData.yearlyTaxable) : 0);
+
+  const netA = bonus - taxA;
+  const netB = bonus - taxBonusB;
+  const winner = netA >= netB ? 'A' : 'B';
+
+  document.getElementById('bonus-result').innerHTML = `
+    <div class="bonus-compare">
+      <div class="compare-box a">
+        <div class="label">方式一：单独计税</div>
+        <div class="val" style="color:#2a6fdb">¥${netA.toLocaleString('zh',{maximumFractionDigits:0})}</div>
+        <div class="tax">缴税 ¥${taxA.toLocaleString('zh',{maximumFractionDigits:0})}</div>
+        ${winner==='A'?'<div class="winner-badge">✓ 更划算</div>':''}
+      </div>
+      <div class="compare-box b">
+        <div class="label">方式二：合并计税</div>
+        <div class="val" style="color:#18a87a">¥${netB.toLocaleString('zh',{maximumFractionDigits:0})}</div>
+        <div class="tax">缴税 ¥${taxBonusB.toLocaleString('zh',{maximumFractionDigits:0})}</div>
+        ${winner==='B'?'<div class="winner-badge">✓ 更划算</div>':''}
+      </div>
+    </div>`;
+}
+
+function copyResult() {
+  if (!lastData) return;
+  const { gross, socialTotal, monthlyTax, net } = lastData;
+  const t = `个税计算结果\n税前月薪：${gross}元\n五险一金：${socialTotal.toFixed(2)}元\n个人所得税：${monthlyTax.toFixed(2)}元\n实发工资：${net.toFixed(2)}元\n来源：万能工具箱`;
+  navigator.clipboard.writeText(t).then(() => alert('✅ 已复制'));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生活费预算 & 简易记账</title>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#faf5ff;--card:#fff;--ink:#1e1b4b;--muted:#6b7280;--accent:#9b3fc8;--border:#e9d5ff;--green:#16a34a;--red:#dc2626;--blue:#2a6fdb;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+.topbar{background:#1e1b4b;color:#fff;padding:0 20px;height:56px;display:flex;align-items:center;gap:16px;}
+.topbar a{color:#a5b4fc;text-decoration:none;font-size:.85rem;}
+.topbar a:hover{color:#fff;}
+.topbar-title{font-family:'ZCOOL XiaoWei',serif;font-size:1.1rem;color:#fff;}
+.container{max-width:860px;margin:0 auto;padding:24px 16px 60px;}
+.page-title{text-align:center;padding:24px 0 20px;}
+.page-title h1{font-family:'ZCOOL XiaoWei',serif;font-size:2rem;letter-spacing:2px;}
+.page-title h1 span{color:var(--accent);}
+.page-title p{color:var(--muted);font-size:.9rem;margin-top:6px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px;margin-bottom:18px;box-shadow:0 2px 12px rgba(155,63,200,.05);}
+.card-title{font-size:.95rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.card-title-left{display:flex;align-items:center;gap:8px;}
+
+/* SUMMARY */
+.summary-bar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:18px;}
+@media(max-width:480px){.summary-bar{grid-template-columns:1fr;}}
+.sum-item{border-radius:14px;padding:16px 18px;text-align:center;}
+.sum-income{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1px solid #86efac;}
+.sum-expense{background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fca5a5;}
+.sum-balance{background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #93c5fd;}
+.sum-val{font-family:'ZCOOL XiaoWei',serif;font-size:1.8rem;line-height:1;}
+.sum-income .sum-val{color:var(--green);}
+.sum-expense .sum-val{color:var(--red);}
+.sum-balance .sum-val{color:var(--blue);}
+.sum-label{font-size:.75rem;color:var(--muted);margin-top:5px;}
+
+/* BUDGET */
+.budget-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.budget-row label{font-size:.82rem;color:var(--muted);flex-shrink:0;width:80px;}
+.budget-input{flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Noto Sans SC',sans-serif;font-size:.9rem;outline:none;}
+.budget-input:focus{border-color:var(--accent);}
+.budget-month{font-size:.78rem;color:var(--muted);margin-bottom:10px;}
+
+/* PROGRESS BAR */
+.progress-wrap{margin:4px 0 16px;}
+.progress-label{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);margin-bottom:5px;}
+.progress-bar{height:12px;border-radius:6px;background:#e9d5ff;overflow:hidden;}
+.progress-fill{height:100%;border-radius:6px;background:var(--accent);transition:width .5s ease;}
+.progress-fill.warn{background:#f97316;}
+.progress-fill.over{background:var(--red);}
+
+/* ADD ENTRY */
+.type-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.type-btn{padding:10px;border:1.5px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;font-family:'Noto Sans SC',sans-serif;font-size:.88rem;text-align:center;transition:all .2s;font-weight:500;}
+.type-btn.income.active{border-color:var(--green);background:#ecfdf5;color:var(--green);}
+.type-btn.expense.active{border-color:var(--red);background:#fef2f2;color:var(--red);}
+
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:480px){.form-row{grid-template-columns:1fr;}}
+.form-group label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:4px;}
+.form-group input,.form-group select{
+  width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;
+  font-size:.9rem;font-family:'Noto Sans SC',sans-serif;background:#fff;color:var(--ink);
+  outline:none;transition:border-color .2s;
+}
+.form-group input:focus,.form-group select:focus{border-color:var(--accent);}
+
+/* CAT PILLS */
+.cat-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.cat-pill{
+  padding:5px 12px;border-radius:20px;font-size:.78rem;cursor:pointer;
+  border:1.5px solid var(--border);background:#fff;transition:all .15s;
+}
+.cat-pill.active{font-weight:700;}
+
+.add-btn{
+  width:100%;padding:13px;margin-top:14px;
+  background:var(--accent);color:#fff;border:none;border-radius:11px;
+  font-size:.95rem;font-weight:700;font-family:'Noto Sans SC',sans-serif;cursor:pointer;transition:all .2s;
+}
+.add-btn:hover{background:#7c2d9e;transform:translateY(-1px);}
+
+/* CHART */
+.chart-area{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center;}
+@media(max-width:480px){.chart-area{grid-template-columns:1fr;}}
+.pie-wrap{position:relative;width:140px;height:140px;flex-shrink:0;}
+.pie-svg{width:100%;height:100%;}
+.pie-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;}
+.pie-total{font-family:'ZCOOL XiaoWei',serif;font-size:1.3rem;color:var(--ink);}
+.pie-label{font-size:.68rem;color:var(--muted);}
+.pie-legend{flex:1;}
+.legend-item{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;font-size:.82rem;}
+.legend-color{width:12px;height:12px;border-radius:3px;flex-shrink:0;margin-right:6px;}
+.legend-name{flex:1;color:var(--ink);}
+.legend-amount{font-weight:700;color:var(--ink);}
+.legend-pct{color:var(--muted);font-size:.75rem;margin-left:4px;}
+
+/* LIST */
+.entry-list{display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto;}
+.entry-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;background:var(--bg);border-radius:11px;
+  border:1px solid transparent;transition:all .15s;
+}
+.entry-item:hover{border-color:var(--border);}
+.entry-cat-icon{
+  width:36px;height:36px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;
+}
+.entry-info{flex:1;min-width:0;}
+.entry-name{font-size:.88rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.entry-meta{font-size:.73rem;color:var(--muted);margin-top:1px;}
+.entry-amount{font-weight:700;font-size:1rem;flex-shrink:0;}
+.entry-amount.income{color:var(--green);}
+.entry-amount.expense{color:var(--red);}
+.entry-del{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;font-size:.9rem;}
+.entry-del:hover{color:var(--red);}
+.empty-hint{color:var(--muted);text-align:center;padding:24px;font-size:.88rem;}
+
+/* MONTH NAV */
+.month-nav{display:flex;align-items:center;gap:10px;}
+.month-nav button{background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:1rem;}
+.month-nav button:hover{border-color:var(--accent);color:var(--accent);}
+.month-display{font-weight:700;font-size:.95rem;min-width:80px;text-align:center;}
+
+.ad-bar{background:#faf5ff;border:1px dashed #d8b4fe;border-radius:10px;padding:12px;text-align:center;color:#7e22ce;font-size:.8rem;margin-bottom:16px;}
+
+/* COLORS */
+.COLORS{display:none;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="index.html">← 返回首页</a>
+  <span style="color:#6366f1">/</span>
+  <span class="topbar-title">📊 生活费预算 & 记账</span>
+</div>
+
+<div class="container">
+  <div class="page-title">
+    <h1>生活费<span>预算</span>记账本</h1>
+    <p>收支记录 · 月度预算 · 消费结构分析 · 数据仅存本地</p>
+  </div>
+
+  <div class="ad-bar">📢 广告位 · 理财/保险/信用卡类合作 欢迎联系</div>
+
+  <!-- MONTH NAV + SUMMARY -->
+  <div class="card">
+    <div class="card-title">
+      <div class="card-title-left">📅 月度总览</div>
+      <div class="month-nav">
+        <button onclick="changeMonth(-1)">◀</button>
+        <span class="month-display" id="month-display">--</span>
+        <button onclick="changeMonth(1)">▶</button>
+      </div>
+    </div>
+    <div class="summary-bar">
+      <div class="sum-item sum-income">
+        <div class="sum-val" id="s-income">¥0</div>
+        <div class="sum-label">总收入</div>
+      </div>
+      <div class="sum-item sum-expense">
+        <div class="sum-val" id="s-expense">¥0</div>
+        <div class="sum-label">总支出</div>
+      </div>
+      <div class="sum-item sum-balance">
+        <div class="sum-val" id="s-balance">¥0</div>
+        <div class="sum-label">结余</div>
+      </div>
+    </div>
+
+    <!-- BUDGET -->
+    <div style="border-top:1px solid var(--border);padding-top:16px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <span style="font-size:.85rem;font-weight:700;">本月预算：</span>
+        <input class="budget-input" style="width:130px;" type="number" id="budget-input" placeholder="设置月预算">
+        <button onclick="saveBudget()" style="padding:7px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:'Noto Sans SC',sans-serif;font-size:.82rem;">保存</button>
+      </div>
+      <div class="progress-wrap" id="budget-wrap" style="display:none;">
+        <div class="progress-label">
+          <span id="prog-used">已用 ¥0</span>
+          <span id="prog-pct">0%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+        <div style="font-size:.75rem;color:var(--muted);margin-top:4px;" id="prog-remain"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD ENTRY -->
+  <div class="card">
+    <div class="card-title"><div class="card-title-left">➕ 添加记录</div></div>
+    <div class="type-row">
+      <button class="type-btn expense active" id="type-expense" onclick="setType('expense')">💸 支出</button>
+      <button class="type-btn income" id="type-income" onclick="setType('income')">💵 收入</button>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>金额（元）</label>
+        <input type="number" id="entry-amount" placeholder="0.00" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>日期</label>
+        <input type="date" id="entry-date">
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top:10px;">
+      <label>描述（可选）</label>
+      <input type="text" id="entry-note" placeholder="例：午饭、打车、工资...">
+    </div>
+
+    <div class="form-group" style="margin-top:10px;">
+      <label>分类</label>
+      <div class="cat-pills" id="cat-pills"></div>
+    </div>
+
+    <button class="add-btn" onclick="addEntry()">添加记录</button>
+  </div>
+
+  <!-- PIE CHART -->
+  <div class="card" id="chart-card" style="display:none;">
+    <div class="card-title"><div class="card-title-left">🥧 支出结构分析</div></div>
+    <div class="chart-area">
+      <div class="pie-wrap">
+        <svg class="pie-svg" id="pie-svg" viewBox="0 0 36 36"></svg>
+        <div class="pie-center">
+          <div class="pie-total" id="pie-total">¥0</div>
+          <div class="pie-label">本月支出</div>
+        </div>
+      </div>
+      <div class="pie-legend" id="pie-legend"></div>
+    </div>
+  </div>
+
+  <!-- LIST -->
+  <div class="card">
+    <div class="card-title">
+      <div class="card-title-left">📋 收支明细</div>
+      <button onclick="clearMonth()" style="background:none;border:1px solid #fca5a5;color:var(--red);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:.75rem;">清空本月</button>
+    </div>
+    <div class="entry-list" id="entry-list"></div>
+  </div>
+
+  <div class="ad-bar">📚 理财入门小课 · 5天学会管钱 · 报名了解</div>
+</div>
+
+<script>
+const EXPENSE_CATS = [
+  { name:'餐饮', icon:'🍜', color:'#f97316' },
+  { name:'交通', icon:'🚌', color:'#3b82f6' },
+  { name:'购物', icon:'🛍️', color:'#8b5cf6' },
+  { name:'娱乐', icon:'🎮', color:'#ec4899' },
+  { name:'住房', icon:'🏠', color:'#14b8a6' },
+  { name:'医疗', icon:'💊', color:'#ef4444' },
+  { name:'教育', icon:'📚', color:'#f59e0b' },
+  { name:'其他', icon:'📦', color:'#6b7280' },
+];
+const INCOME_CATS = [
+  { name:'工资', icon:'💼', color:'#16a34a' },
+  { name:'奖金', icon:'🎁', color:'#0ea5e9' },
+  { name:'理财', icon:'📈', color:'#8b5cf6' },
+  { name:'副业', icon:'💡', color:'#f97316' },
+  { name:'其他', icon:'➕', color:'#6b7280' },
+];
+
+let currentType = 'expense';
+let selectedCat = '餐饮';
+let currentMonth = new Date();
+currentMonth.setDate(1);
+
+function setType(t) {
+  currentType = t;
+  document.getElementById('type-expense').classList.toggle('active', t==='expense');
+  document.getElementById('type-income').classList.toggle('active', t==='income');
+  renderCatPills();
+}
+
+function renderCatPills() {
+  const cats = currentType === 'expense' ? EXPENSE_CATS : INCOME_CATS;
+  if (!cats.find(c => c.name === selectedCat)) selectedCat = cats[0].name;
+  document.getElementById('cat-pills').innerHTML = cats.map(c => `
+    <span class="cat-pill ${c.name === selectedCat ? 'active' : ''}"
+      style="${c.name===selectedCat?`background:${c.color}20;border-color:${c.color};color:${c.color}`:'color:var(--muted)'}"
+      onclick="pickCat('${c.name}')">${c.icon} ${c.name}</span>`).join('');
+}
+
+function pickCat(n) {
+  selectedCat = n;
+  renderCatPills();
+}
+
+function getKey(month) {
+  return `budget_entries_${month.getFullYear()}_${month.getMonth()+1}`;
+}
+function getBudgetKey(month) {
+  return `budget_amount_${month.getFullYear()}_${month.getMonth()+1}`;
+}
+
+function addEntry() {
+  const amount = parseFloat(document.getElementById('entry-amount').value);
+  const date = document.getElementById('entry-date').value;
+  const note = document.getElementById('entry-note').value.trim();
+  if (!amount || amount <= 0) { alert('请输入有效金额'); return; }
+  if (!date) { alert('请选择日期'); return; }
+
+  const cats = currentType === 'expense' ? EXPENSE_CATS : INCOME_CATS;
+  const cat = cats.find(c => c.name === selectedCat) || cats[0];
+  const entry = { id: Date.now(), type: currentType, amount, date, note: note || cat.name, cat: cat.name, icon: cat.icon, color: cat.color };
+
+  const key = getKey(currentMonth);
+  let arr = JSON.parse(localStorage.getItem(key) || '[]');
+  arr.unshift(entry);
+  localStorage.setItem(key, JSON.stringify(arr));
+
+  document.getElementById('entry-amount').value = '';
+  document.getElementById('entry-note').value = '';
+  renderAll();
+}
+
+function delEntry(id) {
+  const key = getKey(currentMonth);
+  let arr = JSON.parse(localStorage.getItem(key) || '[]');
+  arr = arr.filter(e => e.id !== id);
+  localStorage.setItem(key, JSON.stringify(arr));
+  renderAll();
+}
+
+function saveBudget() {
+  const v = parseFloat(document.getElementById('budget-input').value);
+  if (!v || v <= 0) { alert('请输入有效预算金额'); return; }
+  localStorage.setItem(getBudgetKey(currentMonth), v);
+  renderAll();
+}
+
+function clearMonth() {
+  if (!confirm('确定清空本月所有记录？')) return;
+  localStorage.removeItem(getKey(currentMonth));
+  renderAll();
+}
+
+function changeMonth(d) {
+  currentMonth.setMonth(currentMonth.getMonth() + d);
+  renderAll();
+}
+
+function fmt(n) {
+  return '¥' + n.toLocaleString('zh', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function renderAll() {
+  const m = currentMonth;
+  document.getElementById('month-display').textContent = `${m.getFullYear()}年${m.getMonth()+1}月`;
+
+  const key = getKey(m);
+  const arr = JSON.parse(localStorage.getItem(key) || '[]');
+
+  const income = arr.filter(e => e.type==='income').reduce((s,e) => s+e.amount, 0);
+  const expense = arr.filter(e => e.type==='expense').reduce((s,e) => s+e.amount, 0);
+  const balance = income - expense;
+
+  document.getElementById('s-income').textContent = fmt(income);
+  document.getElementById('s-expense').textContent = fmt(expense);
+  const bEl = document.getElementById('s-balance');
+  bEl.textContent = fmt(balance);
+  bEl.style.color = balance >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // Budget
+  const budget = parseFloat(localStorage.getItem(getBudgetKey(m)) || '0');
+  if (budget > 0) {
+    document.getElementById('budget-input').value = budget;
+    document.getElementById('budget-wrap').style.display = 'block';
+    const pct = Math.min(150, (expense/budget*100));
+    const fill = document.getElementById('prog-fill');
+    fill.style.width = Math.min(100, pct) + '%';
+    fill.className = 'progress-fill' + (pct > 100 ? ' over' : pct > 80 ? ' warn' : '');
+    document.getElementById('prog-used').textContent = `已用 ${fmt(expense)}`;
+    document.getElementById('prog-pct').textContent = pct.toFixed(1) + '%';
+    const remain = budget - expense;
+    document.getElementById('prog-remain').textContent = remain >= 0
+      ? `剩余预算 ${fmt(remain)}，继续保持！`
+      : `⚠️ 已超支 ${fmt(-remain)}`;
+  } else {
+    document.getElementById('budget-wrap').style.display = 'none';
+  }
+
+  // Pie chart
+  const expArr = arr.filter(e => e.type==='expense');
+  if (expArr.length) {
+    document.getElementById('chart-card').style.display = 'block';
+    const bycat = {};
+    expArr.forEach(e => {
+      bycat[e.cat] = (bycat[e.cat] || { amount:0, color:e.color, icon:e.icon });
+      bycat[e.cat].amount += e.amount;
+    });
+    const catArr = Object.entries(bycat).map(([n,v]) => ({ name:n, ...v })).sort((a,b)=>b.amount-a.amount);
+    const total = catArr.reduce((s,c) => s+c.amount, 0);
+
+    // Draw pie
+    const svg = document.getElementById('pie-svg');
+    let angle = 0;
+    const cx=18, cy=18, r=15.9, hole=10;
+    let paths = '';
+    catArr.forEach(cat => {
+      const pct = cat.amount / total;
+      const startAngle = angle;
+      angle += pct * 360;
+      const a1 = (startAngle - 90) * Math.PI / 180;
+      const a2 = (angle - 90) * Math.PI / 180;
+      const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+      const x2 = cx + r * Math.cos(a2), y2 = cy + r * Math.sin(a2);
+      const hx1 = cx + hole * Math.cos(a1), hy1 = cy + hole * Math.sin(a1);
+      const hx2 = cx + hole * Math.cos(a2), hy2 = cy + hole * Math.sin(a2);
+      const large = pct > 0.5 ? 1 : 0;
+      if (pct < 0.001) return;
+      paths += `<path d="M${hx1} ${hy1} L${x1} ${y1} A${r} ${r} 0 ${large} 1 ${x2} ${y2} L${hx2} ${hy2} A${hole} ${hole} 0 ${large} 0 ${hx1} ${hy1} Z" fill="${cat.color}" opacity="0.9"/>`;
+    });
+    svg.innerHTML = paths;
+    document.getElementById('pie-total').textContent = fmt(total);
+
+    document.getElementById('pie-legend').innerHTML = catArr.map(c => `
+      <div class="legend-item">
+        <div class="legend-color" style="background:${c.color}"></div>
+        <span class="legend-name">${c.icon} ${c.name}</span>
+        <span class="legend-amount">${fmt(c.amount)}</span>
+        <span class="legend-pct">${(c.amount/total*100).toFixed(1)}%</span>
+      </div>`).join('');
+  } else {
+    document.getElementById('chart-card').style.display = 'none';
+  }
+
+  // List
+  const listEl = document.getElementById('entry-list');
+  if (!arr.length) { listEl.innerHTML = '<div class="empty-hint">本月还没有记录，点击"添加记录"开始记账 ✏️</div>'; return; }
+  listEl.innerHTML = arr.map(e => `
+    <div class="entry-item">
+      <div class="entry-cat-icon" style="background:${e.color}20">${e.icon}</div>
+      <div class="entry-info">
+        <div class="entry-name">${e.note}</div>
+        <div class="entry-meta">${e.date} · ${e.cat}</div>
+      </div>
+      <div class="entry-amount ${e.type}">${e.type==='income'?'+':'-'}${fmt(e.amount)}</div>
+      <button class="entry-del" onclick="delEntry(${e.id})">🗑</button>
+    </div>`).join('');
+}
+
+// Init
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('entry-date').value = today;
+renderCatPills();
+renderAll();
+setType('expense');
+</script>
+</body>
+</html>

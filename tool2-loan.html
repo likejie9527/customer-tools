@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>房贷/车贷精准计算器</title>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f0f4ff;--card:#fff;--ink:#0f172a;--muted:#64748b;--accent:#2a6fdb;--border:#e2e8f0;--green:#16a34a;--red:#dc2626;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+.topbar{background:var(--ink);color:#fff;padding:0 20px;height:56px;display:flex;align-items:center;gap:16px;}
+.topbar a{color:#94a3b8;text-decoration:none;font-size:.85rem;}
+.topbar a:hover{color:#fff;}
+.topbar-title{font-family:'ZCOOL XiaoWei',serif;font-size:1.1rem;color:#fff;}
+.container{max-width:860px;margin:0 auto;padding:24px 16px 60px;}
+.page-title{text-align:center;padding:28px 0 24px;}
+.page-title h1{font-family:'ZCOOL XiaoWei',serif;font-size:2rem;letter-spacing:2px;}
+.page-title h1 span{color:var(--accent);}
+.page-title p{color:var(--muted);font-size:.9rem;margin-top:6px;}
+
+/* TABS */
+.tabs{display:flex;gap:0;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:4px;margin-bottom:20px;}
+.tab{flex:1;padding:10px;text-align:center;cursor:pointer;border-radius:9px;font-size:.9rem;font-weight:500;transition:all .2s;color:var(--muted);}
+.tab.active{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(42,111,219,.3);}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:24px;margin-bottom:18px;}
+.card-title{font-size:.95rem;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+
+/* LOAN TYPE TABS */
+.loan-type-row{display:flex;gap:10px;margin-bottom:18px;}
+.ltype-btn{flex:1;padding:10px;border:1.5px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;font-family:'Noto Sans SC',sans-serif;font-size:.85rem;text-align:center;transition:all .2s;color:var(--muted);}
+.ltype-btn.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent);color:var(--accent);font-weight:700;}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:480px){.form-grid{grid-template-columns:1fr;}}
+.form-group label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:5px;font-weight:500;}
+.form-group input,.form-group select{
+  width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;
+  font-size:.95rem;font-family:'Noto Sans SC',sans-serif;background:#fff;color:var(--ink);
+  outline:none;transition:border-color .2s;
+}
+.form-group input:focus,.form-group select:focus{border-color:var(--accent);}
+.input-unit{position:relative;}
+.input-unit input{padding-right:50px;}
+.input-unit .unit{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.82rem;}
+
+/* SLIDER */
+.slider-group{grid-column:1/-1;}
+.slider-wrap{display:flex;align-items:center;gap:12px;margin-top:8px;}
+.slider-wrap input[type=range]{flex:1;accent-color:var(--accent);}
+.slider-val{min-width:60px;text-align:right;font-weight:700;color:var(--accent);}
+
+.calc-btn{
+  width:100%;padding:15px;margin-top:4px;
+  background:var(--accent);color:#fff;border:none;border-radius:12px;
+  font-size:1rem;font-weight:700;font-family:'Noto Sans SC',sans-serif;
+  cursor:pointer;transition:all .2s;letter-spacing:1px;
+}
+.calc-btn:hover{background:#1d5cb8;transform:translateY(-1px);box-shadow:0 6px 20px rgba(42,111,219,.35);}
+
+/* SUMMARY */
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+@media(max-width:480px){.summary-grid{grid-template-columns:1fr 1fr;}}
+.summary-item{background:var(--bg);border-radius:12px;padding:14px;text-align:center;}
+.summary-val{font-family:'ZCOOL XiaoWei',serif;font-size:1.5rem;color:var(--accent);}
+.summary-name{font-size:.75rem;color:var(--muted);margin-top:4px;}
+
+/* EARLY REPAY */
+.early-section{border-top:1px solid var(--border);padding-top:20px;margin-top:4px;}
+.early-title{font-size:.9rem;font-weight:700;color:var(--ink);margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+.early-result{background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #93c5fd;border-radius:12px;padding:16px;margin-top:14px;font-size:.88rem;line-height:1.9;}
+.early-result strong{color:var(--accent);}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;max-height:380px;border:1px solid var(--border);border-radius:12px;}
+.detail-table{width:100%;border-collapse:collapse;font-size:.82rem;min-width:500px;}
+.detail-table thead th{position:sticky;top:0;background:#f8fafc;padding:10px 12px;text-align:right;color:var(--muted);font-weight:600;border-bottom:2px solid var(--border);}
+.detail-table thead th:first-child{text-align:center;}
+.detail-table td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--border);}
+.detail-table td:first-child{text-align:center;color:var(--muted);}
+.detail-table tr:last-child td{border:none;}
+.detail-table tr:hover td{background:#f8fafc;}
+.principal-part{color:var(--green);}
+.interest-part{color:var(--red);}
+.remaining{color:var(--muted);}
+
+.copy-btn{width:100%;padding:11px;margin-top:12px;background:transparent;border:1.5px solid var(--border);border-radius:10px;color:var(--muted);font-size:.85rem;font-family:'Noto Sans SC',sans-serif;cursor:pointer;transition:all .2s;}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent);}
+.ad-bar{background:#fff9f0;border:1px dashed #f0c070;border-radius:10px;padding:12px;text-align:center;color:#c08020;font-size:.8rem;margin-bottom:16px;}
+.result-section{display:none;}
+.result-section.show{display:block;animation:fadeUp .4s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="index.html">← 返回首页</a>
+  <span style="color:#555">/</span>
+  <span class="topbar-title">🏠 房贷 / 车贷计算器</span>
+</div>
+
+<div class="container">
+  <div class="page-title">
+    <h1>房贷 / 车贷<span>精准</span>计算器</h1>
+    <p>等额本息 · 等额本金 · 提前还款试算 · 公积金/商贷</p>
+  </div>
+
+  <div class="ad-bar">📢 广告位 · 购房/汽车类合作 欢迎联系</div>
+
+  <div class="card">
+    <div class="card-title">🏦 贷款类型</div>
+    <div class="loan-type-row">
+      <button class="ltype-btn active" onclick="setLoanType('commercial')">商业贷款</button>
+      <button class="ltype-btn" onclick="setLoanType('fund')">公积金贷款</button>
+      <button class="ltype-btn" onclick="setLoanType('combo')">组合贷款</button>
+    </div>
+
+    <div class="card-title">📝 贷款信息</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>贷款金额</label>
+        <div class="input-unit">
+          <input type="number" id="loan-amount" placeholder="1000000" value="1000000" min="1000">
+          <span class="unit">元</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>贷款期限</label>
+        <select id="loan-years">
+          <option value="5">5年（60期）</option>
+          <option value="10">10年（120期）</option>
+          <option value="15">15年（180期）</option>
+          <option value="20">20年（240期）</option>
+          <option value="25">25年（300期）</option>
+          <option value="30" selected>30年（360期）</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>年利率 <span id="rate-hint" style="color:var(--accent)">商贷参考：3.45%</span></label>
+        <div class="input-unit">
+          <input type="number" id="loan-rate" placeholder="3.45" value="3.45" step="0.01" min="0.1">
+          <span class="unit">%</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>还款方式</label>
+        <select id="repay-type">
+          <option value="equal-payment">等额本息（月供固定）</option>
+          <option value="equal-principal">等额本金（月供递减）</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- COMBO -->
+    <div id="combo-section" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+      <div class="card-title" style="font-size:.88rem;">🏛 公积金部分</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>公积金贷款金额</label>
+          <div class="input-unit">
+            <input type="number" id="fund-amount" placeholder="400000" value="400000">
+            <span class="unit">元</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>公积金年利率</label>
+          <div class="input-unit">
+            <input type="number" id="fund-rate" placeholder="2.85" value="2.85" step="0.01">
+            <span class="unit">%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="calc-btn" onclick="calculate()">立即计算</button>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result-section" id="result-section">
+    <div class="card">
+      <div class="card-title">📊 还款概览</div>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="summary-val" id="s-monthly">--</div>
+          <div class="summary-name">首月月供（元）</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-val" id="s-total">--</div>
+          <div class="summary-name">还款总额（元）</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-val" id="s-interest">--</div>
+          <div class="summary-name">支付利息（元）</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-val" id="s-ratio">--</div>
+          <div class="summary-name">利息/本金 比</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-val" id="s-last">--</div>
+          <div class="summary-name">末期月供（元）</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-val" id="s-end-date">--</div>
+          <div class="summary-name">预计还清时间</div>
+        </div>
+      </div>
+
+      <!-- EARLY REPAY -->
+      <div class="early-section">
+        <div class="early-title">⚡ 提前还款试算</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>还款时间（第几期）</label>
+            <div class="input-unit">
+              <input type="number" id="early-period" placeholder="24" min="1">
+              <span class="unit">期</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>提前还款金额</label>
+            <div class="input-unit">
+              <input type="number" id="early-amount" placeholder="200000">
+              <span class="unit">元</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:12px;">
+          <label>提前还款后选择</label>
+          <select id="early-choice">
+            <option value="reduce-period">缩短还款期限（月供不变）</option>
+            <option value="reduce-payment">减少月供（期限不变）</option>
+          </select>
+        </div>
+        <button class="calc-btn" style="margin-top:12px;" onclick="calcEarly()">计算提前还款效果</button>
+        <div class="early-result" id="early-result" style="display:none;"></div>
+      </div>
+
+      <button class="copy-btn" onclick="copyResult()">📋 复制还款方案</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 还款明细表（前60期）</div>
+      <div class="table-wrap">
+        <table class="detail-table">
+          <thead>
+            <tr>
+              <th>期数</th>
+              <th>月供</th>
+              <th class="principal-part">还本金</th>
+              <th class="interest-part">还利息</th>
+              <th class="remaining">剩余本金</th>
+            </tr>
+          </thead>
+          <tbody id="detail-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="ad-bar">📘 购房攻略完整版 · 避坑指南 · ¥19.9 解锁</div>
+</div>
+
+<script>
+let loanType = 'commercial';
+let schedule = [];
+let calcData = {};
+
+function setLoanType(t) {
+  loanType = t;
+  document.querySelectorAll('.ltype-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['commercial','fund','combo'][i] === t);
+  });
+  const rateHint = {
+    commercial: '商贷参考：3.45%',
+    fund: '公积金参考：2.85%',
+    combo: '商贷部分利率'
+  };
+  document.getElementById('rate-hint').textContent = rateHint[t];
+  document.getElementById('combo-section').style.display = t === 'combo' ? 'block' : 'none';
+  if (t === 'fund') document.getElementById('loan-rate').value = '2.85';
+  if (t === 'commercial') document.getElementById('loan-rate').value = '3.45';
+}
+
+function fmt(n) { return n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+function fmtW(n) { return n >= 10000 ? (n/10000).toFixed(2) + '万' : fmt(n); }
+
+function buildSchedule(principal, yearlyRate, months, repayType) {
+  const r = yearlyRate / 100 / 12;
+  const sched = [];
+  let remaining = principal;
+
+  if (repayType === 'equal-payment') {
+    const monthly = r === 0 ? principal/months : principal * r * Math.pow(1+r, months) / (Math.pow(1+r, months)-1);
+    for (let i = 1; i <= months; i++) {
+      const interest = remaining * r;
+      const p = monthly - interest;
+      remaining -= p;
+      sched.push({ period:i, monthly, principal:p, interest, remaining: Math.max(0,remaining) });
+    }
+  } else {
+    const monthlyPrincipal = principal / months;
+    for (let i = 1; i <= months; i++) {
+      const interest = remaining * r;
+      const monthly = monthlyPrincipal + interest;
+      remaining -= monthlyPrincipal;
+      sched.push({ period:i, monthly, principal:monthlyPrincipal, interest, remaining: Math.max(0,remaining) });
+    }
+  }
+  return sched;
+}
+
+function calculate() {
+  let principal = parseFloat(document.getElementById('loan-amount').value);
+  const years = parseInt(document.getElementById('loan-years').value);
+  const rate = parseFloat(document.getElementById('loan-rate').value);
+  const repayType = document.getElementById('repay-type').value;
+
+  if (!principal || !rate) { alert('请填写完整的贷款信息'); return; }
+  const months = years * 12;
+
+  // Combo
+  let comboSched = null;
+  if (loanType === 'combo') {
+    const fundAmount = parseFloat(document.getElementById('fund-amount').value) || 0;
+    const fundRate = parseFloat(document.getElementById('fund-rate').value) || 2.85;
+    if (fundAmount > 0) {
+      comboSched = buildSchedule(fundAmount, fundRate, months, repayType);
+      principal = principal - fundAmount;
+    }
+  }
+
+  schedule = buildSchedule(principal, rate, months, repayType);
+
+  // Merge combo
+  if (comboSched) {
+    for (let i = 0; i < schedule.length; i++) {
+      schedule[i].monthly += comboSched[i].monthly;
+      schedule[i].principal += comboSched[i].principal;
+      schedule[i].interest += comboSched[i].interest;
+      schedule[i].remaining += comboSched[i].remaining;
+    }
+    principal += parseFloat(document.getElementById('fund-amount').value);
+  }
+
+  const totalPay = schedule.reduce((s,r) => s + r.monthly, 0);
+  const totalInterest = totalPay - principal;
+  const firstMonthly = schedule[0].monthly;
+  const lastMonthly = schedule[schedule.length-1].monthly;
+
+  const endDate = new Date();
+  endDate.setMonth(endDate.getMonth() + months);
+  const endStr = `${endDate.getFullYear()}年${endDate.getMonth()+1}月`;
+
+  document.getElementById('s-monthly').textContent = fmtW(firstMonthly);
+  document.getElementById('s-total').textContent = fmtW(totalPay);
+  document.getElementById('s-interest').textContent = fmtW(totalInterest);
+  document.getElementById('s-ratio').textContent = (totalInterest/principal*100).toFixed(1) + '%';
+  document.getElementById('s-last').textContent = fmtW(lastMonthly);
+  document.getElementById('s-end-date').textContent = endStr;
+
+  calcData = { principal, rate, months, repayType, totalPay, totalInterest, firstMonthly };
+
+  // Table (first 60)
+  const tbody = document.getElementById('detail-tbody');
+  const show = schedule.slice(0, 60);
+  tbody.innerHTML = show.map(r => `
+    <tr>
+      <td>${r.period}</td>
+      <td><strong>${fmt(r.monthly)}</strong></td>
+      <td class="principal-part">${fmt(r.principal)}</td>
+      <td class="interest-part">${fmt(r.interest)}</td>
+      <td class="remaining">${fmt(r.remaining)}</td>
+    </tr>`).join('');
+
+  document.getElementById('result-section').classList.add('show');
+  document.getElementById('result-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+function calcEarly() {
+  if (!schedule.length) { alert('请先计算贷款'); return; }
+  const period = parseInt(document.getElementById('early-period').value);
+  const earlyAmt = parseFloat(document.getElementById('early-amount').value);
+  const choice = document.getElementById('early-choice').value;
+
+  if (!period || !earlyAmt) { alert('请输入提前还款时间和金额'); return; }
+  if (period >= schedule.length) { alert('期数超出还款期限'); return; }
+
+  const remPrincipal = schedule[period-1].remaining - earlyAmt;
+  if (remPrincipal <= 0) { 
+    document.getElementById('early-result').style.display = 'block';
+    document.getElementById('early-result').innerHTML = '<strong>🎉 您的提前还款金额可直接还清剩余贷款！</strong>';
+    return;
+  }
+
+  const rate = calcData.rate;
+  const remMonths = schedule.length - period;
+
+  if (choice === 'reduce-period') {
+    // Same monthly, shorter term
+    const r = rate / 100 / 12;
+    const monthly = schedule[period].monthly;
+    const newMonths = Math.ceil(Math.log(monthly / (monthly - remPrincipal * r)) / Math.log(1+r));
+    const savedMonths = remMonths - newMonths;
+    const origRemPay = schedule.slice(period).reduce((s,r) => s+r.monthly, 0);
+    const newTotalPay = remPrincipal * rate/100/12 * Math.pow(1+rate/100/12, newMonths) / (Math.pow(1+rate/100/12, newMonths)-1) * newMonths;
+    const saved = origRemPay - newTotalPay - earlyAmt;
+
+    document.getElementById('early-result').innerHTML = `
+      <div>提前还款 <strong>${fmtW(earlyAmt)}</strong> 元后：</div>
+      <div>剩余本金：<strong>${fmtW(remPrincipal)}</strong> 元</div>
+      <div>月供维持：<strong>${fmt(monthly)}</strong> 元不变</div>
+      <div>还款期缩短：<strong>${savedMonths} 个月</strong>（约 ${(savedMonths/12).toFixed(1)} 年）</div>
+      <div>节省利息约：<strong style="color:var(--green)">${fmtW(Math.max(0,saved))} 元</strong></div>`;
+  } else {
+    const r = rate / 100 / 12;
+    const newMonthly = r === 0 ? remPrincipal/remMonths : remPrincipal * r * Math.pow(1+r, remMonths) / (Math.pow(1+r, remMonths)-1);
+    const oldMonthly = schedule[period].monthly;
+    const origRemPay = schedule.slice(period).reduce((s,r) => s+r.monthly, 0);
+    const newTotalPay = newMonthly * remMonths;
+    const saved = origRemPay - newTotalPay - earlyAmt;
+
+    document.getElementById('early-result').innerHTML = `
+      <div>提前还款 <strong>${fmtW(earlyAmt)}</strong> 元后：</div>
+      <div>剩余本金：<strong>${fmtW(remPrincipal)}</strong> 元</div>
+      <div>新月供：<strong>${fmt(newMonthly)}</strong> 元（减少 ${fmt(oldMonthly - newMonthly)} 元）</div>
+      <div>期限不变：剩余 <strong>${remMonths}</strong> 期</div>
+      <div>节省利息约：<strong style="color:var(--green)">${fmtW(Math.max(0,saved))} 元</strong></div>`;
+  }
+  document.getElementById('early-result').style.display = 'block';
+}
+
+function copyResult() {
+  const { principal, rate, months, firstMonthly, totalPay, totalInterest } = calcData;
+  const text = `贷款计算结果\n贷款金额：${fmtW(principal)}元\n年利率：${rate}%\n期限：${months/12}年\n首月月供：${fmt(firstMonthly)}元\n还款总额：${fmtW(totalPay)}元\n支付利息：${fmtW(totalInterest)}元\n来源：万能工具箱`;
+  navigator.clipboard.writeText(text).then(() => alert('✅ 已复制'));
+}
+</script>
+</body>
+</html>

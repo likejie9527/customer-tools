@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BMI 健康计算器 & 基础代谢率</title>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f5f2eb; --card:#fffdf8; --ink:#1a1612; --muted:#7a7065;
+  --accent:#e8521a; --border:#e2ddd4;
+  --green:#18a87a; --yellow:#d4a012; --red:#dc2626; --orange:#ea580c;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+
+/* NAV */
+.topbar{background:var(--ink);color:#fff;padding:0 20px;height:56px;display:flex;align-items:center;gap:16px;}
+.topbar a{color:#aaa;text-decoration:none;font-size:.85rem;}
+.topbar a:hover{color:#fff;}
+.topbar-title{font-family:'ZCOOL XiaoWei',serif;font-size:1.1rem;color:#fff;margin-left:4px;}
+
+/* LAYOUT */
+.container{max-width:800px;margin:0 auto;padding:24px 16px 60px;}
+
+/* PAGE TITLE */
+.page-title{
+  text-align:center;padding:32px 0 28px;
+}
+.page-title h1{font-family:'ZCOOL XiaoWei',serif;font-size:2rem;letter-spacing:2px;}
+.page-title h1 span{color:var(--accent);}
+.page-title p{color:var(--muted);font-size:.9rem;margin-top:8px;}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px;}
+.card-title{font-size:1rem;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px;}
+.card-title span{font-size:1.2rem;}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:480px){.form-grid{grid-template-columns:1fr;}}
+.form-group label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:6px;font-weight:500;}
+.form-group input,.form-group select{
+  width:100%;padding:12px 14px;
+  border:1.5px solid var(--border);border-radius:10px;
+  font-size:1rem;font-family:'Noto Sans SC',sans-serif;
+  background:#fff;color:var(--ink);
+  transition:border-color .2s;outline:none;
+}
+.form-group input:focus,.form-group select:focus{border-color:var(--accent);}
+.input-unit{position:relative;}
+.input-unit input{padding-right:40px;}
+.input-unit .unit{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.85rem;pointer-events:none;}
+
+/* GENDER */
+.gender-group{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.gender-btn{
+  padding:12px;border:1.5px solid var(--border);border-radius:10px;
+  background:#fff;cursor:pointer;font-family:'Noto Sans SC',sans-serif;
+  font-size:.9rem;transition:all .2s;text-align:center;
+}
+.gender-btn.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent);color:var(--accent);font-weight:700;}
+
+/* CALC BTN */
+.calc-btn{
+  width:100%;padding:16px;margin-top:20px;
+  background:var(--accent);color:#fff;border:none;
+  border-radius:14px;font-size:1.05rem;font-weight:700;
+  font-family:'Noto Sans SC',sans-serif;cursor:pointer;
+  transition:all .2s;letter-spacing:1px;
+}
+.calc-btn:hover{background:#c94416;transform:translateY(-1px);box-shadow:0 6px 20px rgba(232,82,26,.3);}
+.calc-btn:active{transform:translateY(0);}
+
+/* RESULT */
+.result-card{display:none;}
+.result-card.show{display:block;animation:fadeUp .4s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+
+.bmi-display{
+  text-align:center;padding:32px 20px;
+  background:linear-gradient(135deg,var(--result-bg1,#fff8f5),var(--result-bg2,#fff));
+  border-radius:16px;margin-bottom:20px;
+  border:2px solid var(--result-color,var(--accent));
+}
+.bmi-number{font-family:'ZCOOL XiaoWei',serif;font-size:4rem;color:var(--result-color,var(--accent));line-height:1;}
+.bmi-label{font-size:1.2rem;font-weight:700;color:var(--result-color,var(--accent));margin-top:8px;}
+.bmi-range{font-size:.82rem;color:var(--muted);margin-top:4px;}
+
+/* GAUGE */
+.gauge-wrap{margin:20px 0;}
+.gauge-bar{
+  height:14px;border-radius:7px;
+  background:linear-gradient(to right,#3b82f6 0%,#22c55e 25%,#eab308 60%,#f97316 80%,#dc2626 100%);
+  position:relative;overflow:visible;
+}
+.gauge-pointer{
+  position:absolute;top:-6px;
+  width:4px;height:26px;background:var(--ink);border-radius:2px;
+  transform:translateX(-2px);
+  transition:left .6s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 2px 8px rgba(0,0,0,.3);
+}
+.gauge-labels{display:flex;justify-content:space-between;margin-top:6px;font-size:.7rem;color:var(--muted);}
+
+/* METRICS GRID */
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
+@media(max-width:480px){.metrics{grid-template-columns:1fr;}}
+.metric{background:var(--bg);border-radius:12px;padding:16px;text-align:center;}
+.metric-val{font-family:'ZCOOL XiaoWei',serif;font-size:1.8rem;color:var(--accent);}
+.metric-name{font-size:.78rem;color:var(--muted);margin-top:4px;}
+
+/* CALORIE TABLE */
+.calorie-table{width:100%;border-collapse:collapse;font-size:.88rem;}
+.calorie-table th{background:var(--bg);padding:10px 12px;text-align:left;color:var(--muted);font-weight:500;font-size:.78rem;}
+.calorie-table td{padding:10px 12px;border-bottom:1px solid var(--border);}
+.calorie-table tr:last-child td{border:none;}
+.calorie-table .cal-val{font-weight:700;color:var(--ink);}
+
+/* ADVICE */
+.advice-box{
+  background:linear-gradient(135deg,#f0fdf4,#dcfce7);
+  border:1px solid #86efac;border-radius:12px;padding:16px 18px;
+  font-size:.88rem;line-height:1.8;color:#166534;
+}
+.advice-box.warn{background:linear-gradient(135deg,#fff7ed,#ffedd5);border-color:#fdba74;color:#9a3412;}
+.advice-box.danger{background:linear-gradient(135deg,#fef2f2,#fee2e2);border-color:#fca5a5;color:#991b1b;}
+
+/* COPY BTN */
+.copy-btn{
+  width:100%;padding:12px;margin-top:12px;
+  background:transparent;border:1.5px solid var(--border);
+  border-radius:10px;color:var(--muted);font-size:.85rem;
+  font-family:'Noto Sans SC',sans-serif;cursor:pointer;
+  transition:all .2s;
+}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* HISTORY */
+.history-list{display:flex;flex-direction:column;gap:10px;}
+.history-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;background:var(--bg);border-radius:10px;
+  font-size:.85rem;
+}
+.history-date{color:var(--muted);font-size:.78rem;}
+.history-bmi{font-weight:700;font-size:1rem;}
+.history-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:4px;}
+.history-del:hover{color:var(--red);}
+.empty-hint{color:var(--muted);text-align:center;padding:20px;font-size:.88rem;}
+
+/* AD */
+.ad-bar{background:#fff9f0;border:1px dashed #f0c070;border-radius:10px;padding:12px;text-align:center;color:#c08020;font-size:.8rem;margin-bottom:16px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html">← 返回首页</a>
+  <span style="color:#555">/</span>
+  <span class="topbar-title">⚖️ BMI 健康计算器</span>
+</div>
+
+<div class="container">
+  <div class="page-title">
+    <h1>BMI <span>健康</span>计算器</h1>
+    <p>体重指数 · 基础代谢率 · 个性化健康建议</p>
+  </div>
+
+  <div class="ad-bar">📢 广告位 · 健康类产品合作欢迎洽谈</div>
+
+  <!-- INPUT CARD -->
+  <div class="card">
+    <div class="card-title"><span>📝</span>输入个人数据</div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label>身高</label>
+        <div class="input-unit">
+          <input type="number" id="height" placeholder="170" min="50" max="250">
+          <span class="unit">cm</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>体重</label>
+        <div class="input-unit">
+          <input type="number" id="weight" placeholder="65" min="10" max="300">
+          <span class="unit">kg</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>年龄</label>
+        <div class="input-unit">
+          <input type="number" id="age" placeholder="25" min="1" max="120">
+          <span class="unit">岁</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>性别</label>
+        <div class="gender-group">
+          <button class="gender-btn active" id="male-btn" onclick="setGender('male')">👨 男</button>
+          <button class="gender-btn" id="female-btn" onclick="setGender('female')">👩 女</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top:16px;">
+      <label>活动水平（用于每日热量估算）</label>
+      <select id="activity">
+        <option value="1.2">久坐不动（几乎不运动）</option>
+        <option value="1.375">轻度活动（每周 1-3 天运动）</option>
+        <option value="1.55" selected>中度活动（每周 3-5 天运动）</option>
+        <option value="1.725">高度活动（每周 6-7 天运动）</option>
+        <option value="1.9">极高强度（体力劳动/高强度训练）</option>
+      </select>
+    </div>
+
+    <button class="calc-btn" onclick="calculate()">立即计算</button>
+  </div>
+
+  <!-- RESULT CARD -->
+  <div class="card result-card" id="result">
+    <div class="card-title"><span>📊</span>计算结果</div>
+
+    <div class="bmi-display" id="bmi-display">
+      <div class="bmi-number" id="bmi-number">--</div>
+      <div class="bmi-label" id="bmi-label">--</div>
+      <div class="bmi-range" id="bmi-range"></div>
+    </div>
+
+    <div class="gauge-wrap">
+      <div class="gauge-bar">
+        <div class="gauge-pointer" id="gauge-ptr" style="left:0%"></div>
+      </div>
+      <div class="gauge-labels">
+        <span>偏瘦<br>&lt;18.5</span>
+        <span>正常<br>18.5-24</span>
+        <span>超重<br>24-28</span>
+        <span>肥胖<br>≥28</span>
+      </div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-val" id="bmr-val">--</div>
+        <div class="metric-name">基础代谢率 (kcal/天)</div>
+      </div>
+      <div class="metric">
+        <div class="metric-val" id="tdee-val">--</div>
+        <div class="metric-name">每日总消耗 (kcal/天)</div>
+      </div>
+      <div class="metric">
+        <div class="metric-val" id="ideal-weight">--</div>
+        <div class="metric-name">理想体重范围 (kg)</div>
+      </div>
+      <div class="metric">
+        <div class="metric-val" id="diff-weight">--</div>
+        <div class="metric-name">距理想体重 (kg)</div>
+      </div>
+    </div>
+
+    <div class="card-title"><span>🍽️</span>每日热量参考（基于您的 TDEE）</div>
+    <table class="calorie-table">
+      <thead>
+        <tr><th>目标</th><th>每日热量</th><th>说明</th></tr>
+      </thead>
+      <tbody id="calorie-tbody"></tbody>
+    </table>
+
+    <div style="margin-top:20px;">
+      <div class="card-title"><span>💡</span>健康建议</div>
+      <div class="advice-box" id="advice-box"></div>
+    </div>
+
+    <button class="copy-btn" onclick="copyResult()">📋 一键复制结果</button>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="card">
+    <div class="card-title"><span>📜</span>历史记录</div>
+    <div class="history-list" id="history-list">
+      <div class="empty-hint">暂无记录，计算后自动保存</div>
+    </div>
+  </div>
+
+  <div class="ad-bar" style="margin-top:0;">📘 减脂计划定制文档 · 专业营养师整理 · ¥9.9 解锁</div>
+</div>
+
+<script>
+let gender = 'male';
+let lastResult = null;
+
+function setGender(g) {
+  gender = g;
+  document.getElementById('male-btn').classList.toggle('active', g==='male');
+  document.getElementById('female-btn').classList.toggle('active', g==='female');
+}
+
+function calculate() {
+  const h = parseFloat(document.getElementById('height').value);
+  const w = parseFloat(document.getElementById('weight').value);
+  const a = parseFloat(document.getElementById('age').value);
+  const act = parseFloat(document.getElementById('activity').value);
+
+  if (!h || !w || !a) { alert('请填写完整的身高、体重和年龄'); return; }
+  if (h < 50 || h > 250) { alert('请输入合理的身高（50-250 cm）'); return; }
+  if (w < 10 || w > 300) { alert('请输入合理的体重（10-300 kg）'); return; }
+  if (a < 1 || a > 120) { alert('请输入合理的年龄（1-120 岁）'); return; }
+
+  const bmi = w / ((h/100) ** 2);
+  // Mifflin-St Jeor
+  const bmr = gender === 'male'
+    ? 10*w + 6.25*h - 5*a + 5
+    : 10*w + 6.25*h - 5*a - 161;
+  const tdee = bmr * act;
+
+  const minIdeal = 18.5 * (h/100)**2;
+  const maxIdeal = 23.9 * (h/100)**2;
+  const diff = bmi < 18.5 ? (minIdeal - w) : bmi > 24 ? (w - maxIdeal) : 0;
+
+  let label, color, bg1, bg2, adviceClass, advice;
+  if (bmi < 18.5) {
+    label='偏瘦'; color='#3b82f6'; bg1='#eff6ff'; bg2='#dbeafe';
+    adviceClass=''; advice='您的 BMI 偏低，建议适当增加优质蛋白质和碳水化合物的摄入，结合适量力量训练，循序渐进地增重。避免暴饮暴食，保持规律饮食习惯。建议咨询营养师制定个性化方案。';
+  } else if (bmi < 24) {
+    label='正常'; color='#16a34a'; bg1='#f0fdf4'; bg2='#dcfce7';
+    adviceClass=''; advice='🎉 恭喜！您的体重处于健康范围内。保持均衡饮食，每周坚持 150 分钟中等强度有氧运动，维持良好的生活习惯，定期监测体重变化。';
+  } else if (bmi < 28) {
+    label='超重'; color='#d97706'; bg1='#fffbeb'; bg2='#fef3c7';
+    adviceClass='warn'; advice='⚠️ 您的体重略微超标。建议适当控制饮食热量（减少精制碳水和高脂肪食物），增加蔬菜水果的摄入，每周进行 3-5 次有氧运动，每次 30-45 分钟。避免熬夜和久坐。';
+  } else if (bmi < 32) {
+    label='轻度肥胖'; color='#ea580c'; bg1='#fff7ed'; bg2='#ffedd5';
+    adviceClass='warn'; advice='⚠️ 您已达到轻度肥胖标准。请认真对待，建议在医生或营养师指导下制定减重计划。控制每日热量摄入，坚持规律运动，目标每月减重 1-2 kg 为健康速度。';
+  } else {
+    label='中重度肥胖'; color='#dc2626'; bg1='#fef2f2'; bg2='#fee2e2';
+    adviceClass='danger'; advice='🚨 您的 BMI 已达到中重度肥胖，这会显著增加心血管疾病、糖尿病等风险。强烈建议立即就医，在专业人士指导下进行系统的减重干预。';
+  }
+
+  // Update UI
+  const result = document.getElementById('result');
+  result.classList.add('show');
+
+  const bmiDisp = document.getElementById('bmi-display');
+  bmiDisp.style.setProperty('--result-color', color);
+  bmiDisp.style.setProperty('--result-bg1', bg1);
+  bmiDisp.style.setProperty('--result-bg2', bg2);
+  bmiDisp.style.border = `2px solid ${color}`;
+
+  document.getElementById('bmi-number').textContent = bmi.toFixed(1);
+  document.getElementById('bmi-number').style.color = color;
+  document.getElementById('bmi-label').textContent = label;
+  document.getElementById('bmi-label').style.color = color;
+  document.getElementById('bmi-range').textContent = `WHO 标准：18.5-23.9 为正常体重`;
+
+  // Gauge: map BMI 10-40 to 0-100%
+  const pct = Math.min(100, Math.max(0, (bmi - 10) / 30 * 100));
+  document.getElementById('gauge-ptr').style.left = pct + '%';
+
+  document.getElementById('bmr-val').textContent = Math.round(bmr);
+  document.getElementById('tdee-val').textContent = Math.round(tdee);
+  document.getElementById('ideal-weight').textContent = `${minIdeal.toFixed(1)}~${maxIdeal.toFixed(1)}`;
+  document.getElementById('diff-weight').textContent = diff === 0 ? '✓ 在范围内' : (bmi < 18.5 ? `需增重 ${diff.toFixed(1)}` : `需减重 ${diff.toFixed(1)}`);
+
+  // Calorie table
+  const tbody = document.getElementById('calorie-tbody');
+  const rows = [
+    ['减脂（缓和）', Math.round(tdee * 0.85), '每天少 15%，安全稳健'],
+    ['减脂（激进）', Math.round(tdee * 0.75), '每天少 25%，需监控状态'],
+    ['维持体重', Math.round(tdee), '与消耗持平'],
+    ['增重（缓和）', Math.round(tdee * 1.1), '每天多 10%，干净增重'],
+    ['增重（激进）', Math.round(tdee * 1.2), '每天多 20%，搭配力训'],
+  ];
+  tbody.innerHTML = rows.map(([g,c,d])=>`<tr><td>${g}</td><td class="cal-val">${c} kcal</td><td style="color:var(--muted);font-size:.8rem">${d}</td></tr>`).join('');
+
+  const advBox = document.getElementById('advice-box');
+  advBox.className = 'advice-box' + (adviceClass ? ' ' + adviceClass : '');
+  advBox.textContent = advice;
+
+  lastResult = { bmi, bmr, tdee, label, h, w, a, gender, minIdeal, maxIdeal };
+  saveHistory(bmi, label, w, h);
+  result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function saveHistory(bmi, label, w, h) {
+  const key = 'bmi_history';
+  let arr = JSON.parse(localStorage.getItem(key) || '[]');
+  arr.unshift({ bmi: bmi.toFixed(1), label, w, h, date: new Date().toLocaleDateString('zh-CN') });
+  if (arr.length > 10) arr = arr.slice(0, 10);
+  localStorage.setItem(key, JSON.stringify(arr));
+  renderHistory();
+}
+
+function renderHistory() {
+  const key = 'bmi_history';
+  const arr = JSON.parse(localStorage.getItem(key) || '[]');
+  const el = document.getElementById('history-list');
+  if (!arr.length) { el.innerHTML = '<div class="empty-hint">暂无记录，计算后自动保存</div>'; return; }
+  el.innerHTML = arr.map((r, i) => `
+    <div class="history-item">
+      <div>
+        <div class="history-bmi">BMI ${r.bmi} · ${r.label}</div>
+        <div class="history-date">${r.date} · 身高 ${r.h}cm 体重 ${r.w}kg</div>
+      </div>
+      <button class="history-del" onclick="delHistory(${i})">🗑</button>
+    </div>`).join('');
+}
+
+function delHistory(i) {
+  const key = 'bmi_history';
+  let arr = JSON.parse(localStorage.getItem(key) || '[]');
+  arr.splice(i, 1);
+  localStorage.setItem(key, JSON.stringify(arr));
+  renderHistory();
+}
+
+function copyResult() {
+  if (!lastResult) return;
+  const { bmi, bmr, tdee, label, h, w, a } = lastResult;
+  const text = `BMI健康报告\n身高${h}cm 体重${w}kg 年龄${a}岁\nBMI指数：${bmi.toFixed(1)}（${label}）\n基础代谢率：${Math.round(bmr)} kcal/天\n每日总消耗：${Math.round(tdee)} kcal/天\n来源：万能工具箱`;
+  navigator.clipboard.writeText(text).then(() => alert('✅ 已复制到剪贴板'));
+}
+
+renderHistory();
+</script>
+</body>
+</html>

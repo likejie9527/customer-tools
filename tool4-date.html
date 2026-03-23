@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日期差 & 纪念日倒计时</title>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fefce8;--card:#fff;--ink:#1c1917;--muted:#78716c;--accent:#d4a012;--dark:#92400e;--border:#fde68a;--red:#dc2626;--green:#16a34a;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+.topbar{background:#1c1917;color:#fff;padding:0 20px;height:56px;display:flex;align-items:center;gap:16px;}
+.topbar a{color:#a8a29e;text-decoration:none;font-size:.85rem;}
+.topbar a:hover{color:#fff;}
+.topbar-title{font-family:'ZCOOL XiaoWei',serif;font-size:1.1rem;color:#fff;}
+.container{max-width:800px;margin:0 auto;padding:24px 16px 60px;}
+.page-title{text-align:center;padding:28px 0 24px;}
+.page-title h1{font-family:'ZCOOL XiaoWei',serif;font-size:2rem;letter-spacing:2px;}
+.page-title h1 span{color:var(--accent);}
+.page-title p{color:var(--muted);font-size:.9rem;margin-top:6px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:24px;margin-bottom:18px;box-shadow:0 2px 16px rgba(212,160,18,.07);}
+.card-title{font-size:.95rem;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+
+/* DATE DIFF */
+.date-row{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:end;}
+@media(max-width:480px){.date-row{grid-template-columns:1fr;}}
+.form-group label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:5px;font-weight:500;}
+.form-group input,.form-group select{
+  width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:10px;
+  font-size:.95rem;font-family:'Noto Sans SC',sans-serif;background:#fff;color:var(--ink);
+  outline:none;transition:border-color .2s;
+}
+.form-group input:focus{border-color:var(--accent);}
+.arrow-btn{
+  width:44px;height:44px;background:var(--accent);color:#fff;border:none;border-radius:10px;
+  font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.calc-btn{
+  width:100%;padding:14px;margin-top:16px;
+  background:var(--accent);color:#fff;border:none;border-radius:12px;
+  font-size:1rem;font-weight:700;font-family:'Noto Sans SC',sans-serif;
+  cursor:pointer;transition:all .2s;
+}
+.calc-btn:hover{background:#b8860a;transform:translateY(-1px);box-shadow:0 6px 20px rgba(212,160,18,.35);}
+
+/* DIFF RESULT */
+.diff-hero{
+  background:linear-gradient(135deg,#fefce8,#fef9c3);
+  border:2px solid var(--accent);border-radius:16px;
+  text-align:center;padding:24px;margin-top:16px;display:none;
+}
+.diff-hero.show{display:block;animation:fadeUp .4s ease;}
+.diff-number{font-family:'ZCOOL XiaoWei',serif;font-size:4rem;color:var(--accent);line-height:1;}
+.diff-unit{font-size:1rem;color:var(--muted);}
+.diff-breakdown{display:flex;justify-content:center;gap:20px;margin-top:14px;flex-wrap:wrap;}
+.diff-item{text-align:center;}
+.diff-item-val{font-family:'ZCOOL XiaoWei',serif;font-size:1.4rem;color:var(--dark);}
+.diff-item-name{font-size:.72rem;color:var(--muted);}
+
+/* COUNTDOWN ADD */
+.countdown-form{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:480px){.countdown-form{grid-template-columns:1fr;}}
+.emoji-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.emoji-btn{
+  width:36px;height:36px;border:1.5px solid var(--border);border-radius:8px;
+  background:#fff;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;
+  transition:all .2s;
+}
+.emoji-btn.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);}
+
+/* COUNTDOWN CARDS */
+.countdown-list{display:flex;flex-direction:column;gap:14px;margin-top:4px;}
+.ct-card{
+  background:var(--bg);border:1.5px solid var(--border);border-radius:16px;
+  padding:18px 20px;display:flex;align-items:center;gap:16px;
+  position:relative;overflow:hidden;
+}
+.ct-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:var(--c,var(--accent));
+}
+.ct-emoji{font-size:2rem;flex-shrink:0;}
+.ct-info{flex:1;min-width:0;}
+.ct-name{font-weight:700;font-size:.95rem;margin-bottom:2px;}
+.ct-date{font-size:.78rem;color:var(--muted);}
+.ct-count{text-align:right;flex-shrink:0;}
+.ct-days{font-family:'ZCOOL XiaoWei',serif;font-size:1.8rem;color:var(--c,var(--accent));}
+.ct-sub{font-size:.72rem;color:var(--muted);}
+.ct-del{
+  position:absolute;top:10px;right:10px;
+  width:24px;height:24px;background:none;border:none;
+  color:var(--muted);cursor:pointer;font-size:1rem;border-radius:4px;
+}
+.ct-del:hover{color:var(--red);background:#fee2e2;}
+.past-badge{font-size:.68rem;background:#e0e7ff;color:#3730a3;padding:2px 6px;border-radius:4px;display:inline-block;margin-top:3px;}
+.today-badge{font-size:.68rem;background:#dcfce7;color:#166534;padding:2px 6px;border-radius:4px;}
+
+/* LIVE CLOCK */
+.live-section{text-align:center;padding:10px;}
+.live-date{font-size:.85rem;color:var(--muted);margin-bottom:4px;}
+.live-time{font-family:'ZCOOL XiaoWei',serif;font-size:2.4rem;color:var(--dark);letter-spacing:4px;}
+
+.empty-hint{color:var(--muted);text-align:center;padding:24px;font-size:.88rem;}
+.ad-bar{background:#fffbeb;border:1px dashed #fcd34d;border-radius:10px;padding:12px;text-align:center;color:#92400e;font-size:.8rem;margin-bottom:16px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+
+.section-divider{height:1px;background:var(--border);margin:6px 0 18px;}
+
+/* SELECTED EMOJI */
+.selected-emoji{font-size:1.2rem;margin-right:4px;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="index.html">← 返回首页</a>
+  <span style="color:#555">/</span>
+  <span class="topbar-title">📅 日期差 & 纪念日倒计时</span>
+</div>
+
+<div class="container">
+  <div class="page-title">
+    <h1>日期差 & <span>纪念日</span>倒计时</h1>
+    <p>计算两日期相差天数 · 管理多个纪念日 · 秒级精确倒计时</p>
+  </div>
+
+  <div class="ad-bar">📢 广告位 · 节日/情感/定制礼品类合作 欢迎联系</div>
+
+  <!-- LIVE CLOCK -->
+  <div class="card" style="padding:16px 24px;">
+    <div class="live-section">
+      <div class="live-date" id="live-date"></div>
+      <div class="live-time" id="live-time"></div>
+    </div>
+  </div>
+
+  <!-- DATE DIFF -->
+  <div class="card">
+    <div class="card-title">📐 日期差计算</div>
+    <div class="date-row">
+      <div class="form-group">
+        <label>开始日期</label>
+        <input type="date" id="date-from">
+      </div>
+      <button class="arrow-btn" onclick="swapDates()">⇄</button>
+      <div class="form-group">
+        <label>结束日期</label>
+        <input type="date" id="date-to">
+      </div>
+    </div>
+    <button class="calc-btn" onclick="calcDiff()">计算相差天数</button>
+    <div class="diff-hero" id="diff-hero">
+      <div class="diff-number" id="diff-days">0</div>
+      <div class="diff-unit">天</div>
+      <div class="diff-breakdown">
+        <div class="diff-item"><div class="diff-item-val" id="diff-weeks">--</div><div class="diff-item-name">周</div></div>
+        <div class="diff-item"><div class="diff-item-val" id="diff-months">--</div><div class="diff-item-name">个月（约）</div></div>
+        <div class="diff-item"><div class="diff-item-val" id="diff-years">--</div><div class="diff-item-name">年（约）</div></div>
+      </div>
+      <div style="margin-top:12px;font-size:.82rem;color:var(--muted);" id="diff-desc"></div>
+    </div>
+  </div>
+
+  <!-- ADD COUNTDOWN -->
+  <div class="card">
+    <div class="card-title">➕ 添加纪念日 / 倒计时</div>
+    <div class="countdown-form">
+      <div class="form-group">
+        <label>事件名称</label>
+        <input type="text" id="ct-name" placeholder="例：生日、高考、周年纪念">
+      </div>
+      <div class="form-group">
+        <label>目标日期</label>
+        <input type="date" id="ct-date">
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:12px;">
+      <label>选择图标</label>
+      <div class="emoji-row" id="emoji-row">
+        <button class="emoji-btn active" onclick="pickEmoji(this,'🎂')">🎂</button>
+        <button class="emoji-btn" onclick="pickEmoji(this,'💑')">💑</button>
+        <button class="emoji-btn" onclick="pickEmoji(this,'🎓')">🎓</button>
+        <button class="emoji-btn" onclick="pickEmoji(this,'✈️')">✈️</button>
+        <button class="emoji-btn" onclick="pickEmoji(this,'🏠')">🏠</button>
+        <button class="emoji-btn" onclick="pickEmoji(this,'💼')">💼</button>
+        <button class="emoji-btn" onclick="pickEmoji(this,'🎉')">🎉</button>
+        <button class="emoji-btn" onclick="pickEmoji(this,'⭐')">⭐</button>
+        <button class="emoji-btn" onclick="pickEmoji(this,'🌟')">🌟</button>
+        <button class="emoji-btn" onclick="pickEmoji(this,'💪')">💪</button>
+        <button class="emoji-btn" onclick="pickEmoji(this,'🏆')">🏆</button>
+        <button class="emoji-btn" onclick="pickEmoji(this,'🔔')">🔔</button>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top:12px;">
+      <label>标签颜色</label>
+      <div style="display:flex;gap:8px;margin-top:6px;">
+        <button class="emoji-btn active" id="col-btn-1" onclick="pickColor('#d4a012')" style="background:#d4a012;border-color:#d4a012;width:28px;height:28px;border-radius:50%;"></button>
+        <button class="emoji-btn" id="col-btn-2" onclick="pickColor('#e8521a')" style="background:#e8521a;border-color:#e8521a;width:28px;height:28px;border-radius:50%;"></button>
+        <button class="emoji-btn" id="col-btn-3" onclick="pickColor('#2a6fdb')" style="background:#2a6fdb;border-color:#2a6fdb;width:28px;height:28px;border-radius:50%;"></button>
+        <button class="emoji-btn" id="col-btn-4" onclick="pickColor('#18a87a')" style="background:#18a87a;border-color:#18a87a;width:28px;height:28px;border-radius:50%;"></button>
+        <button class="emoji-btn" id="col-btn-5" onclick="pickColor('#9b3fc8')" style="background:#9b3fc8;border-color:#9b3fc8;width:28px;height:28px;border-radius:50%;"></button>
+        <button class="emoji-btn" id="col-btn-6" onclick="pickColor('#dc2626')" style="background:#dc2626;border-color:#dc2626;width:28px;height:28px;border-radius:50%;"></button>
+      </div>
+    </div>
+
+    <button class="calc-btn" onclick="addCountdown()">添加到倒计时列表</button>
+  </div>
+
+  <!-- COUNTDOWNS -->
+  <div class="card">
+    <div class="card-title">⏳ 我的纪念日 & 倒计时</div>
+    <div class="countdown-list" id="countdown-list">
+      <div class="empty-hint">还没有添加任何纪念日，快去添加吧 ✨</div>
+    </div>
+  </div>
+
+  <div class="ad-bar">🎨 定制壁纸 / 纪念日头像 · 联系定制 · 欢迎合作</div>
+</div>
+
+<script>
+let selectedEmoji = '🎂';
+let selectedColor = '#d4a012';
+let tickInterval = null;
+
+function pickEmoji(btn, e) {
+  document.querySelectorAll('.emoji-btn').forEach(b => { if (!b.id.startsWith('col')) b.classList.remove('active'); });
+  btn.classList.add('active');
+  selectedEmoji = e;
+}
+function pickColor(c) {
+  selectedColor = c;
+  document.querySelectorAll('[id^=col-btn]').forEach(b => b.style.outline = '');
+  // just update color visually
+}
+
+// Live clock
+function updateClock() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('zh-CN', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+  const timeStr = now.toLocaleTimeString('zh-CN', { hour12: false });
+  document.getElementById('live-date').textContent = dateStr;
+  document.getElementById('live-time').textContent = timeStr;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// Set today as default
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('date-from').value = today;
+document.getElementById('date-to').value = today;
+document.getElementById('ct-date').value = today;
+
+function swapDates() {
+  const a = document.getElementById('date-from').value;
+  const b = document.getElementById('date-to').value;
+  document.getElementById('date-from').value = b;
+  document.getElementById('date-to').value = a;
+}
+
+function calcDiff() {
+  const from = new Date(document.getElementById('date-from').value);
+  const to = new Date(document.getElementById('date-to').value);
+  if (!from || !to || isNaN(from) || isNaN(to)) { alert('请选择有效日期'); return; }
+  const diff = Math.abs(to - from);
+  const days = Math.round(diff / 86400000);
+  const weeks = Math.floor(days / 7);
+  const months = Math.round(days / 30.44);
+  const years = (days / 365.25).toFixed(2);
+
+  document.getElementById('diff-days').textContent = days.toLocaleString();
+  document.getElementById('diff-weeks').textContent = weeks.toLocaleString();
+  document.getElementById('diff-months').textContent = months;
+  document.getElementById('diff-years').textContent = years;
+
+  const dir = to > from ? '从开始到结束共' : (to < from ? '时间已过去了' : '同一天！');
+  const extra = days > 0 ? `${dir} ${days.toLocaleString()} 天` : '两个日期是同一天 🎯';
+  document.getElementById('diff-desc').textContent = extra;
+  document.getElementById('diff-hero').classList.add('show');
+}
+
+// Countdowns
+function addCountdown() {
+  const name = document.getElementById('ct-name').value.trim();
+  const date = document.getElementById('ct-date').value;
+  if (!name) { alert('请输入事件名称'); return; }
+  if (!date) { alert('请选择目标日期'); return; }
+
+  const key = 'countdowns_v2';
+  let arr = JSON.parse(localStorage.getItem(key) || '[]');
+  arr.push({ id: Date.now(), name, date, emoji: selectedEmoji, color: selectedColor });
+  localStorage.setItem(key, JSON.stringify(arr));
+  document.getElementById('ct-name').value = '';
+  renderCountdowns();
+}
+
+function delCountdown(id) {
+  const key = 'countdowns_v2';
+  let arr = JSON.parse(localStorage.getItem(key) || '[]');
+  arr = arr.filter(a => a.id !== id);
+  localStorage.setItem(key, JSON.stringify(arr));
+  renderCountdowns();
+}
+
+function renderCountdowns() {
+  const key = 'countdowns_v2';
+  const arr = JSON.parse(localStorage.getItem(key) || '[]');
+  const el = document.getElementById('countdown-list');
+  if (!arr.length) { el.innerHTML = '<div class="empty-hint">还没有添加任何纪念日，快去添加吧 ✨</div>'; return; }
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  el.innerHTML = arr.map(item => {
+    const target = new Date(item.date); target.setHours(0,0,0,0);
+    const diff = Math.round((target - today) / 86400000);
+    let badge = '';
+    let countDisplay = '';
+    if (diff === 0) {
+      badge = '<span class="today-badge">🎉 就是今天！</span>';
+      countDisplay = '<div class="ct-days" style="font-size:1.2rem">今天</div>';
+    } else if (diff > 0) {
+      countDisplay = `<div class="ct-days" style="color:${item.color}">${diff}</div><div class="ct-sub">天后</div>`;
+    } else {
+      badge = '<span class="past-badge">已过去</span>';
+      countDisplay = `<div class="ct-days" style="color:var(--muted);font-size:1.4rem">${Math.abs(diff)}</div><div class="ct-sub">天前</div>`;
+    }
+    return `
+      <div class="ct-card" style="--c:${item.color}">
+        <button class="ct-del" onclick="delCountdown(${item.id})">✕</button>
+        <div class="ct-emoji">${item.emoji}</div>
+        <div class="ct-info">
+          <div class="ct-name">${item.name}</div>
+          <div class="ct-date">${item.date} ${badge}</div>
+        </div>
+        <div class="ct-count">${countDisplay}</div>
+      </div>`;
+  }).join('');
+}
+
+renderCountdowns();
+</script>
+</body>
+</html>
